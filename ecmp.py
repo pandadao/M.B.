@@ -2,43 +2,34 @@ from priodict import priorityDictionary
 from collections import defaultdict
 from collections import OrderedDict
 import sys
-graph_2  = {
 
-'R1':{'R2':5,'R3':5},
-'R2':{'R1':5,'R4':5},
-'R3':{'R1':5,'R4':5},
-'R4':{'R2':5,'R3':5,'R5':5},
-'R5':{'R4':5}
-
-}
+graph_2 = {
+        
+        'R1':{'R2':5,'R3':5},
+	'R2':{'R1':5,'R4':5},
+	'R3':{'R1':5,'R4':5},
+	'R4':{'R2':5,'R3':5,'R5':5},
+	'R5':{'R4':5}
+        
+        }
 
 graph_3 = {
 
-'192.168.255.1':{'192.168.255.2':10,'192.168.255.3':10},
-'192.168.255.2':{'192.168.255.1':10,'192.168.255.3':50},
-'192.168.255.3':{'192.168.255.1':20,'192.168.255.2':50},
-'192.168.255.4':{'192.168.255.3':20},
-'192.168.255.3':{'192.168.255.4':20}
-}
-
-graph_4 = {
-'R1':{'R2':5},
-'R2':{'R1':5},
-'R2':{'R3':5},
-'R3':{'R2':5},
-'R3':{'R4':5},
-'R4':{'R3':5}
-}
-
-graph_5 = {
-
-'A':{'B':5,'C':10,'E':2},
-'B':{'A':5,'C':5},
-'C':{'B':5,'A':10,'E':8,'D':4},
-'D':{'C':4,'E':5},
-'E':{'A':2,'D':5,'C':8}
+	'E1':{'E8':1},
+	'E2':{'E8':1},
+	'E3':{'E9':1},
+	'E4':{'E10':1},
+	'E5':{'E11':1},
+	'E6':{'E11':1},
+	'E7':{'E12':1},
+        'E8':{'E1':1, 'E2':1, 'E9':1, 'E11':1, 'E10':1},
+        'E9':{'E8':1, 'E3':1, 'E11':1, 'E10':1},
+        'E10':{'E8':1, 'E9':1, 'E11':1, 'E4':1},
+        'E11':{'E10':1, 'E8':1, 'E9':1, 'E12':1, 'E6':1, 'E5':1},
+        'E12':{'E11':1, 'E7':1}
 
 }
+
 
 def Dijkstra(g,start,end=None):
 
@@ -81,7 +72,16 @@ def shortestPath(g,start,end):
     return path[::-1]
 
 
+#print shortestPath(graph_3, 'E3', 'E1')
+a = 1
+while (a == 1):
+    src = raw_input("start src node: ")
+    dest = raw_input("destination node: ")
+    print shortestPath(graph_3, src, dest)
+    a = input()
+'''
 print shortestPath(graph_2,'R5','R1')
 print shortestPath(graph_3,'192.168.255.4','192.168.255.1')
 print shortestPath(graph_4,'R4','R1')
 print shortestPath(graph_5,'A','C')
+'''

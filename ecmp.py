@@ -73,12 +73,26 @@ def shortestPath(g,start,end):
 
 
 #print shortestPath(graph_3, 'E3', 'E1')
+
+
+#recursive print the ECMP result
+for i in range(7):
+    for j in range(7):
+        src = 'E'+str(i+1)
+        dest = 'E' + str(j+1)
+        if (i != j):
+            print shortestPath(graph_3, src, dest)
+        else:
+            None
+            
+'''
 a = 1
 while (a == 1):
     src = raw_input("start src node: ")
     dest = raw_input("destination node: ")
     print shortestPath(graph_3, src, dest)
     a = input()
+'''
 '''
 print shortestPath(graph_2,'R5','R1')
 print shortestPath(graph_3,'192.168.255.4','192.168.255.1')

@@ -1,0 +1,40 @@
+
+Gurobi 7.5.2 (linux64, Python) logging started Fri May  3 17:46:23 2019
+
+Academic license - for non-commercial use only
+Optimize a model with 3 rows, 2 columns and 4 nonzeros
+Coefficient statistics:
+  Matrix range     [1e+00, 3e+00]
+  Objective range  [3e+00, 5e+00]
+  Bounds range     [0e+00, 0e+00]
+  RHS range        [4e+00, 2e+01]
+Presolve removed 2 rows and 0 columns
+Presolve time: 0.00s
+Presolved: 1 rows, 2 columns, 2 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    4.5000000e+01   1.500000e+00   0.000000e+00      0s
+       1    3.6000000e+01   0.000000e+00   0.000000e+00      0s
+
+Solved in 1 iterations and 0.00 seconds
+Optimal objective  3.600000000e+01
+
+Gurobi 7.5.2 (linux64, Python) logging started Fri May  3 17:58:43 2019
+
+Academic license - for non-commercial use only
+Optimize a model with 3 rows, 2 columns and 4 nonzeros
+Coefficient statistics:
+  Matrix range     [1e+00, 3e+00]
+  Objective range  [3e+00, 5e+00]
+  Bounds range     [0e+00, 0e+00]
+  RHS range        [4e+00, 2e+01]
+Presolve removed 2 rows and 0 columns
+Presolve time: 0.00s
+Presolved: 1 rows, 2 columns, 2 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    4.5000000e+01   1.500000e+00   0.000000e+00      0s
+       1    3.6000000e+01   0.000000e+00   0.000000e+00      0s
+
+Solved in 1 iterations and 0.00 seconds
+Optimal objective  3.600000000e+01

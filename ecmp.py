@@ -81,7 +81,7 @@ for i in range(7):
         src = 'E'+str(i+1)
         dest = 'E' + str(j+1)
         if (i != j):
-            print shortestPath(graph_3, src, dest)
+            print (shortestPath(graph_3, src, dest))
         else:
             None
             

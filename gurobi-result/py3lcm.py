@@ -17,6 +17,9 @@ def lcm(a, b):
 def lcms(*numbers):
 
     return reduce(lcm, numbers)
-
-a = lcms(3,4,5)
+a = 1
+period = [4,6,8,10,16]
+for i in range(len(period)):
+    a = lcms(period[i],a)
+#a = lcms(period)
 print (a)

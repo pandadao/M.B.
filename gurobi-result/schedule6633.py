@@ -1,60 +1,70 @@
 from gurobipy import *
+from function_tool import combine
 
 m = Model('Protorype example_type1')
 
-x1 = m.addVar(lb=0,ub=5,vtype=GRB.INTEGER, name = 'x1')
-x2 = m.addVar(lb=0,ub=5,vtype=GRB.INTEGER, name = 'x2')
-x3 = m.addVar(lb=0,ub=2,vtype=GRB.INTEGER, name = 'x3')
-x4 = m.addVar(lb=0,ub=2,vtype=GRB.INTEGER, name = 'x4')
+tt1 = [6,1,1]
+tt2 = [6,1,2]
+tt3 = [3,1,3]
+tt4 = [3,1,4]
 
+'''
+6633排程
+'''
+M = 10000  # M是一個極大值,用來運作 cplex中的either-or 工能
+hyper_period = 6 # LCM求出的最大週期,先以常數項代替
+x_number = 0 # cplex的變數量, x1,x2,x3等
+c_number = 0
 
-x5 = m.addVar(lb=0,ub=1,vtype=GRB.INTEGER, name = 'x5')
-x6 = m.addVar(lb=0,ub=1,vtype=GRB.INTEGER, name = 'x6')
-x7 = m.addVar(lb=0,ub=1,vtype=GRB.INTEGER, name = 'x7')
-x8 = m.addVar(lb=0,ub=1,vtype=GRB.INTEGER, name = 'x8')
-x9 = m.addVar(lb=0,ub=1,vtype=GRB.INTEGER, name = 'x9')
-x10 = m.addVar(lb=0,ub=1,vtype=GRB.INTEGER, name = 'x10')
-x11 = m.addVar(lb=0,ub=1,vtype=GRB.INTEGER, name = 'x11')
-x12 = m.addVar(lb=0,ub=1,vtype=GRB.INTEGER, name = 'x12')
-x13 = m.addVar(lb=0,ub=1,vtype=GRB.INTEGER, name = 'x13')
-x14 = m.addVar(lb=0,ub=1,vtype=GRB.INTEGER, name = 'x14')
-x15 = m.addVar(lb=0,ub=1,vtype=GRB.INTEGER, name = 'x15')
-x16 = m.addVar(lb=0,ub=1,vtype=GRB.INTEGER, name = 'x16')
-x17 = m.addVar(lb=0,ub=1,vtype=GRB.INTEGER, name = 'x17')
+#取所有的tt組合配對: 1,2 1,3 1,4 2,3 2,4 3,4
+pair = combine([1,2,3,4], 2)
 
+#宣告每個TT的offset變數
+for i in range(4):
+    a = "tt"+str(i+1)
+    tti = eval(a)
+    va = "x"+str(i+1)
+    globals()['x{}'.format(i+1)] = m.addVar(lb = 0,ub = int(tti[0]-1),vtype = GRB.INTEGER, name = va)
+    tti.append(eval(va))
+    #print("tt list :", tti)
+    x_number = x_number+1
+    #va = "x"+str(i+1)
 
-m.addConstr(x4-x3-10000*x5<=-1, 'c0')
-m.addConstr(x3-x4+10000*x5<=9999, 'c1')
-m.addConstr(x4-x3-10000*x6<=2, 'c2')
-m.addConstr(x3-x4+10000*x6<=9999, 'c3')
-m.addConstr(x2-x1-10000*x7<=-1, 'c4')
-m.addConstr(x1-x2+10000*x7<=9999, 'c5')
-m.addConstr(x3-x1-10000*x8<=-1, 'c6')
-m.addConstr(x1-x3+10000*x8<=9999, 'c7')
-m.addConstr(x3-x1-10000*x9<=-4, 'c8')
-m.addConstr(x1-x3+10000*x9<=9999, 'c9')
-m.addConstr(x4-x1-10000*x10<=-1, 'c10')
-m.addConstr(x1-x4+10000*x10<=9999, 'c11')
-m.addConstr(x4-x1-10000*x11<=-4, 'c12')
-m.addConstr(x1-x4+10000*x11<=10002, 'c13')
-m.addConstr(x3-x2-10000*x12<=-1, 'c14')
-m.addConstr(x2-x3+10000*x12<=9999, 'c15')
-m.addConstr(x3-x2-10000*x13<=-4, 'c16')
-m.addConstr(x2-x3+10000*x13<=10002, 'c17')
-m.addConstr(x4-x2-10000*x14<=-1, 'c18')
-m.addConstr(x2-x4+10000*x14<=9999, 'c19')
-m.addConstr(x4-x2-10000*x15<=-4, 'c20')
-m.addConstr(x2-x4+10000*x15<=10002, 'c21')
-m.addConstr(x4-x3-10000*x16<=-1, 'c22')
-m.addConstr(x3-x4+10000*x16<=9999, 'c23')
-m.addConstr(x4-x3-10000*x17<=-4, 'c24')
-m.addConstr(x3-x4+10000*x17<=10002, 'c25')
-
+#宣告限制式
+for i in pair:
+    tt_i = "tt"+ str(i[0])  #賦名稱編號給tt_i,叫做tt幾
+    tt_j = "tt"+ str(i[1])
+    tti = eval(tt_i)        #讓tti取得自己的陣列編號
+    ttj = eval(tt_j)
+    print("tti: ", tti)
+    print("ttj: ",ttj)
+    a = int(hyper_period/tti[0])
+    b = int(hyper_period/ttj[0])
+    print("a=",a)
+    print("b=",b)
+    for k in range(a):
+        #print(k)
+        for l in range(b):
+            # 宣告ｙ的變數xi, 之後產生限制式
+            va = "x" + str(x_number+1)
+            globals()['x{}'.format(x_number+1)] = m.addVar(lb = 0, ub = 1, vtype = GRB.INTEGER, name = va) 
+            
+            #宣告c0 c1 c2編號
+            ca = "c"+str(c_number)
+            c_number = c_number+1
+            # //TODO:如何把x1和tt1結合起來,產生限制式
+            m.addConstr(ttj[3]-tti[3]+l*ttj[0]-k*tti[0]-M*eval(va)<=-1, ca)
+            #宣告c0 c1 c2編號
+            ca = "c"+str(c_number)
+            c_number = c_number+1
+            m.addConstr(tti[3]-ttj[3]+k*tti[0]-l*ttj[0]+M*eval(va)<=M-1, ca)
+            x_number = x_number+1
+            #print("x_number: => ",x_number)
 
 
 m.update()
 m.optimize()
-m.setObjective(x1+x2+2*x3+2*x4+49.2,GRB.MINIMIZE)
+m.setObjective(x1+x2+2*x3+2*x4+49.2,GRB.MAXIMIZE)
 
 print('obj: %d'% m.objVal)
 

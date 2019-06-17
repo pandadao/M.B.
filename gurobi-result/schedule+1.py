@@ -1,8 +1,6 @@
 from gurobipy import *
 from function_tool import combine, lcms
 
-from ecmp import *
-
 m = Model('Protorype example_type1')
 
 #變數區
@@ -90,20 +88,20 @@ for i in pair:
             ca = "c"+str(c_number)
             c_number = c_number+1
             # 把x1和tt1結合起來,產生限制式
-            m.addConstr(ttj[5]-tti[5]+l*ttj[0]-k*tti[0]-M*eval(va)<=-(ttj[6]+0.096), ca)
+            m.addConstr(ttj[5]-tti[5]+l*ttj[0]-k*tti[0]-M*eval(va)<=-(ttj[6]+0.096+1), ca)
             #宣告c0 c1 c2編號
             ca = "c"+str(c_number)
             c_number = c_number+1
-            m.addConstr(tti[5]-ttj[5]+k*tti[0]-l*ttj[0]+M*eval(va)<=M-(tti[6]+0.096), ca)
+            m.addConstr(tti[5]-ttj[5]+k*tti[0]-l*ttj[0]+M*eval(va)<=M-(tti[6]+0.096+1), ca)
             x_number = x_number+1
             #print("x_number: => ",x_number)
 
-#TODO: 目標式應該要動態產生
+
 m.setObjective(x1+x2+2*x3+2*x4+49.2,GRB.MINIMIZE)
 m.update()
 m.optimize()
 count = 0
-#print('obj: %d'% m.objVal)
+print('obj: %d'% m.objVal)
 '''
 for v in m.getVars():
     print('%s:%d' %(v.varName, v.x))
@@ -114,31 +112,4 @@ for v in m.getVars():
         break
     else:
         print('%s:%d' %(v.varName, v.x))
-        
-
-        #將offset值放入tti[5]內
-        tti = "tt"+str(count)
-        tti = eval(tti)
-        tti[5] = int(v.x)
-
 print("hyper_period: ",hyper_period)
-
-#利用offset值推算每個TT的起始時間
-
-for i in range(len(tt_count)):
-    tti = "tt"+str(i+1)
-    tti = eval(tti)
-    print(tti)
-
-'''
-for i in range(7):
-    for j in range(7):
-        src = 'E'+str(i+1)
-        dest = 'E' + str(j+1)
-        if (i!=j):
-            print(shortestPath(graph_3, src, dest))
-        else:
-            None
-'''
-#取得src到dest的路徑
-#print(shortestPath(graph_3, 'E3', 'E5'))

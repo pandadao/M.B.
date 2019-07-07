@@ -11,6 +11,8 @@ hyper_period = 1 # LCM求出的最大週期,先以常數項代替
 x_number = 0 # cplex的變數量, x1,x2,x3等
 c_number = 0 # 限制式編號變數
 IFG = 96     # inter frame gap, 單位是bit,假設在1Gbps線路上傳,則是 96/1000us,若是100mbps,則是96/1000000000*1000000 = 0.96us
+obj = 0.0  #目標式參數
+procedelay = 1
 
 
 #將tt資訊讀取出來並儲存成陣列
@@ -77,8 +79,8 @@ for i in pair:
     #print("ttj: ",ttj)
     a = int(hyper_period/int(tti[0]))
     b = int(hyper_period/int(ttj[0]))
-    print("a=",a)
-    print("b=",b)
+#    print("a=",a)
+#    print("b=",b)
     for k in range(a):
         #print(k)
         for l in range(b):
@@ -90,7 +92,7 @@ for i in pair:
             ca = "c"+str(c_number)
             c_number = c_number+1
             # 把x1和tt1結合起來,產生限制式
-            m.addConstr(ttj[5]-tti[5]+l*ttj[0]-k*tti[0]-M*eval(va)<=-(ttj[6]+0.096), ca)
+            m.addConstr(ttj[5]-tti[5]+l*ttj[0]-k*tti[0]-M*eval(va)<=-(ttj[6]+0.096), ca)  #要保留多少gate就可以直接在0.096後面加1或n
             #宣告c0 c1 c2編號
             ca = "c"+str(c_number)
             c_number = c_number+1
@@ -98,8 +100,24 @@ for i in pair:
             x_number = x_number+1
             #print("x_number: => ",x_number)
 
-#TODO: 目標式應該要動態產生
-m.setObjective(x1+x2+2*x3+2*x4+49.2,GRB.MINIMIZE)
+#動態產生目標式
+for i in range(len(tt_count)):  #0 1 2 3 ...
+    tt_i = "tt"+str(i+1)
+    tti = eval(tt_i)
+    src = 'E'+str(tti[1])
+    dest = 'E'+str(tti[2])
+    hop = len(shortestPath(graph_3,src,dest))-1
+    a = int(hyper_period/int(tti[0]))
+#    offset = 'x'+str(i+1)
+#    xi = eval(offset)
+
+    for pi in range(a):  #計算一個hyperperiod內要傳送幾次tti
+        obj = tti[5]+pi*tti[0]+hop*tti[6]+0.1*hop+procedelay*(hop-1)  #這邊的propagation delay先預設0.1, TODO 需要可以動態變動
+
+m.setObjective(obj, GRB.MINIMIZE)
+
+
+
 m.update()
 m.optimize()
 count = 0
@@ -114,31 +132,15 @@ for v in m.getVars():
         break
     else:
         print('%s:%d' %(v.varName, v.x))
-        
 
         #將offset值放入tti[5]內
         tti = "tt"+str(count)
         tti = eval(tti)
         tti[5] = int(v.x)
 
-print("hyper_period: ",hyper_period)
 
-#利用offset值推算每個TT的起始時間
-
+#TODO 利用offset值推算每個 node的xml時間檔
 for i in range(len(tt_count)):
     tti = "tt"+str(i+1)
     tti = eval(tti)
     print(tti)
-
-'''
-for i in range(7):
-    for j in range(7):
-        src = 'E'+str(i+1)
-        dest = 'E' + str(j+1)
-        if (i!=j):
-            print(shortestPath(graph_3, src, dest))
-        else:
-            None
-'''
-#取得src到dest的路徑
-#print(shortestPath(graph_3, 'E3', 'E5'))

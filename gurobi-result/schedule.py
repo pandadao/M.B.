@@ -1,5 +1,6 @@
 from gurobipy import *
 from function_tool import combine, lcms
+from getport import *
 
 from ecmp import *
 
@@ -144,3 +145,74 @@ for i in range(len(tt_count)):
     tti = "tt"+str(i+1)
     tti = eval(tti)
     print(tti)
+    
+    count_in_hyperperiod = int(hyper_period/int(tti[0]))  # how many times in a hyperperiod
+    for tt in range(count_in_hyperperiod):
+        src = 'E'+str(tti[1])
+        dest = 'E'+str(tti[2])
+        path = shortestPath(graph_3, src, dest)
+
+        L = len(path)
+        for path_record in range(L-1):
+            send_node = path[path_record][0]
+            receive_node = path[path_record+1][0]
+            send_port = topology_3[send_node][receive_node]['port']
+
+            if send_node == src:  #如果send_node是發送端,儲存成host格式
+                try:
+                    tmp_list = send_node+'p'+str(send_port)
+                    print (path)
+                    print(tmp_list)
+
+                except:
+                    pass
+
+            else:                 #如果send_node是path上的中繼站(switch),則存成switch格式
+                try:
+                    tmp_list = send_node+'p'+str(send_port)
+                    print(tmp_list)
+
+                except:
+                    pass
+
+# NOTE: gate open time have to keep until frame trasmit over
+
+'''
+    #TODO 推算每個node的時間表
+    src = 'E'+str(tti[1])
+    dest = 'E'+str(tti[2])
+    path = shortestPath(graph_3, src, dest)
+    
+    # 印出路徑上的node編號
+    #print (path[1][0])
+    #最後面的[1:]是將代號變為integer,例如E1變成1
+    #node_record = path[0][0][1:]   #node_record 變數為路徑上的中繼點代號
+    L = len(path)
+    print(path)
+    #print(L)
+    for i in range(L-1):       #算出每個node上的gate開啟時間
+        #print(path[i][0])     # start node
+        #print(path[i+1][0])   # receive node
+        send_node = path[i][0]
+        receive_node = path[i+1][0]
+        print(topology_3[send_node][receive_node])   #印出send_node的port號
+
+        
+        #TODO 推算gate時間
+
+            檢查list是否宣吿過
+            try:
+                list[0]
+            except:
+                print('no')
+
+        #向上取整數 => math.ceil(0.1)
+        #向下取整數 => math.floor(0.1)
+
+        #檢查dict是否存在
+        try:
+            dict["name"] = "dada"
+        except:
+            dict = {}
+            dict["name'] = "dada995"
+'''            

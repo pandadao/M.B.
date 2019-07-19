@@ -175,6 +175,7 @@ for i in range(len(tt_count)):
                     pass
                 else:
                     send_src.append(send_node)
+                    #print('src')
 
 
 
@@ -193,6 +194,7 @@ for i in range(len(tt_count)):
                     pass
                 else:
                     path_node.append(send_node)
+                    #print('switch')
 
 # NOTE: gate open time have to keep until frame trasmit over
 

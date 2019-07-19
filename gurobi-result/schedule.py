@@ -15,6 +15,8 @@ IFG = 96     # inter frame gap, 單位是bit,假設在1Gbps線路上傳,則是 9
 obj = 0.0  #目標式參數
 procedelay = 1
 
+send_src = []   #紀錄哪些節點是host發送端
+path_node = []  #紀錄哪些節點是中繼的switch
 
 #將tt資訊讀取出來並儲存成陣列
 n = 0
@@ -159,6 +161,7 @@ for i in range(len(tt_count)):
             send_port = topology_3[send_node][receive_node]['port']
 
             if send_node == src:  #如果send_node是發送端,儲存成host格式
+                '''
                 try:
                     tmp_list = send_node+'p'+str(send_port)
                     print (path)
@@ -166,14 +169,30 @@ for i in range(len(tt_count)):
 
                 except:
                     pass
+                '''
+                #如果send_src陣列中還沒存進新的host,則新增
+                if send_node in send_src:
+                    pass
+                else:
+                    send_src.append(send_node)
+
+
+
 
             else:                 #如果send_node是path上的中繼站(switch),則存成switch格式
+                '''
                 try:
                     tmp_list = send_node+'p'+str(send_port)
                     print(tmp_list)
 
                 except:
                     pass
+                '''
+                #如果path_node陣列中沒有swith的紀錄,則新增進紀錄
+                if send_node in path_node:
+                    pass
+                else:
+                    path_node.append(send_node)
 
 # NOTE: gate open time have to keep until frame trasmit over
 

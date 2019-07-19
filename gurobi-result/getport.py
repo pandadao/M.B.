@@ -17,12 +17,12 @@ topology_3 = {
 
 topology_3 = {
         
-        'E1':{'portNumber':1, 'E7':{'propDelay':0.1, 'port': 0}}, # E7後面的數字為E1連接到E7的port號,不是E7的port號
-        'E2':{'portNumber':1, 'E7':{'propDelay':0.2, 'port': 0}},
-        'E3':{'portNumber':1, 'E7':{'propDelay':0.3, 'port': 0}},
-        'E4':{'portNumber':1, 'E8':{'propDelay':0.1, 'port': 0}},
-        'E5':{'portNumber':1, 'E8':{'propDelay':0.2, 'port': 0}},
-        'E6':{'portNumber':1, 'E8':{'propDelay':0.3, 'port': 0}},
+        'E1':{'portNumber':1, 'MAC':'00:00:00:00:00:01', 'E7':{'propDelay':0.1, 'port': 0}}, # E7後面的數字為E1連接到E7的port號,不是E7的port號
+        'E2':{'portNumber':1, 'MAC':'00:00:00:00:00:02', 'E7':{'propDelay':0.2, 'port': 0}},
+        'E3':{'portNumber':1, 'MAC':'00:00:00:00:00:03', 'E7':{'propDelay':0.3, 'port': 0}},
+        'E4':{'portNumber':1, 'MAC':'00:00:00:00:00:04', 'E8':{'propDelay':0.1, 'port': 0}},
+        'E5':{'portNumber':1, 'MAC':'00:00:00:00:00:05', 'E8':{'propDelay':0.2, 'port': 0}},
+        'E6':{'portNumber':1, 'MAC':'00:00:00:00:00:06', 'E8':{'propDelay':0.3, 'port': 0}},
         'E7':{'portNumber':4, 'E1':{'propDelay':0.1, 'port': 0}, 
                               'E2':{'propDelay':0.2, 'port':1}, 
                               'E3':{'propDelay':0.3, 'port':2}, 

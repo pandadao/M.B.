@@ -159,7 +159,6 @@ for i in range(len(tt_count)):
             send_node = path[path_record][0]
             receive_node = path[path_record+1][0]
             send_port = topology_3[send_node][receive_node]['port']
-
             if send_node == src:  #如果send_node是發送端,儲存成host格式
                 '''
                 try:
@@ -177,10 +176,30 @@ for i in range(len(tt_count)):
                     send_src.append(send_node)
                     #print('src')
 
+                #加入xml相關資訊
+                try:
+                    Ei = eval(send_node)
+                    time_record = tti[5]+tt*tti[0]
+                    Ei.append({'start': time_record, 'queue':'7', 'dest': topology_3[dest]['MAC'], 'size': tti[3]})
+                    #print(E1)
+
+                except:
+                    globals()[send_node] = []
+
+                    Ei = eval(send_node)
+                    time_record = tti[5]+tt*tti[0]
+                    Ei.append({'start': time_record, 'queue':'7', 'dest': topology_3[dest]['MAC'], 'size': tti[3]})
+                    #print(E1)
 
 
 
-            else:                 #如果send_node是path上的中繼站(switch),則存成switch格式
+
+
+
+
+            #如果send_node是path上的中繼站(switch),則存成switch格式
+
+            else:                                 
                 '''
                 try:
                     tmp_list = send_node+'p'+str(send_port)

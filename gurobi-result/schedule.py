@@ -95,11 +95,11 @@ for i in pair:
             ca = "c"+str(c_number)
             c_number = c_number+1
             # 把x1和tt1結合起來,產生限制式
-            m.addConstr(ttj[5]-tti[5]+l*ttj[0]-k*tti[0]-M*eval(va)<=-(ttj[6]+0.096), ca)  #要保留多少gate就可以直接在0.096後面加1或n
+            m.addConstr(ttj[5]-tti[5]+l*ttj[0]-k*tti[0]-M*eval(va)<=-(ttj[6]+0.096+1), ca)  #要保留多少gate就可以直接在0.096後面加1或n
             #宣告c0 c1 c2編號
             ca = "c"+str(c_number)
             c_number = c_number+1
-            m.addConstr(tti[5]-ttj[5]+k*tti[0]-l*ttj[0]+M*eval(va)<=M-(tti[6]+0.096), ca)
+            m.addConstr(tti[5]-ttj[5]+k*tti[0]-l*ttj[0]+M*eval(va)<=M-(tti[6]+0.096+1), ca)
             x_number = x_number+1
             #print("x_number: => ",x_number)
 
@@ -142,6 +142,12 @@ for v in m.getVars():
         tti[5] = int(v.x)
 
 
+for i in range(len(tt_count)):
+    tti = "tt"+str(i+1)
+    tti = eval(tti)
+    print(tti)
+print(hyper_period)
+'''
 #TODO 利用offset值推算每個 node的xml時間檔
 for i in range(len(tt_count)):
     tti = "tt"+str(i+1)
@@ -160,15 +166,7 @@ for i in range(len(tt_count)):
             receive_node = path[path_record+1][0]
             send_port = topology_3[send_node][receive_node]['port']
             if send_node == src:  #如果send_node是發送端,儲存成host格式
-                '''
-                try:
-                    tmp_list = send_node+'p'+str(send_port)
-                    print (path)
-                    print(tmp_list)
-
-                except:
-                    pass
-                '''
+                
                 #如果send_src陣列中還沒存進新的host,則新增
                 if send_node in send_src:
                     pass
@@ -192,22 +190,9 @@ for i in range(len(tt_count)):
                     #print(E1)
 
 
-
-
-
-
-
             #如果send_node是path上的中繼站(switch),則存成switch格式
 
             else:                                 
-                '''
-                try:
-                    tmp_list = send_node+'p'+str(send_port)
-                    print(tmp_list)
-
-                except:
-                    pass
-                '''
                 #如果path_node陣列中沒有swith的紀錄,則新增進紀錄
                 if send_node in path_node:
                     pass
@@ -215,8 +200,12 @@ for i in range(len(tt_count)):
                     path_node.append(send_node)
                     #print('switch')
 
-# NOTE: gate open time have to keep until frame trasmit over
+                try:
+                    Ei = eval(send_node)
+                    # TODO 有點麻煩,需要用前一個node的發送時間去推算
 
+# NOTE: gate open time have to keep until frame trasmit over
+'''
 '''
     #TODO 推算每個node的時間表
     src = 'E'+str(tti[1])

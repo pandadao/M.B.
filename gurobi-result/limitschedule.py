@@ -6,6 +6,9 @@ import numpy as np
 
 from ecmp import *
 
+import time
+
+
 m = Model('Protorype example_type1')
 
 #變數區
@@ -24,6 +27,8 @@ frame_numbers = 20 #紀錄目前打算排成的TT數量,random產生
 CantSchedule = 0   #如果gurobi不能排程則為1,可以排成則為0,若是0則frame_numbers繼續增加
 host_node = [1,2,3,4,5,6]
 period_list = [100, 150, 200]
+uper_bound = 0
+lower_bound = 0
 
 #隨機產生TT數據,封包大小為46~100 bytes,如果排程結果出錯,則回傳無法排列的tt數據
 while CantSchedule == 0:
@@ -42,7 +47,8 @@ while CantSchedule == 0:
         fo.write(str(period)+' '+str(src)+' '+str(dest)+' '+str(size)+' '+str(j+1)+'\n')
     
     fo.close()
-
+    
+    start_time = time.time()
     #開始進行排成
     
     #將tt資訊讀取出來並儲存成陣列
@@ -179,7 +185,19 @@ while CantSchedule == 0:
 
     if return_value == None:
         CantSchedule = 0
-        frame_numbers = frame_numbers+1
+        lower_bound = frame_numbers
+        frame_numbers = frame_numbers*2
+        run_time = time.time()-start_time
+        fq = open('time-record.txt','a')
+        fq.write('frame_numbers: '+str(frame_numbers)+' '+"run time: "+str(run_time)+ '\n')
     else:
-        CantSchedule = 1
+        uper_bound = frame_numbers
+        frame_numbers = int((lower_bound+frame_numbers)/2)
+        if frame_numbers == lower_bound:
+            CantSchedule = 1
+        else:
+            pass
 
+fq.write('frame_numbers: '+str(frame_numbers)+' '+"run time: "+run_time+ '\n')
+fq.close()
+fp.close()

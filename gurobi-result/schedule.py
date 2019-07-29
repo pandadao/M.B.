@@ -122,7 +122,7 @@ m.setObjective(obj, GRB.MINIMIZE)
 
 
 m.update()
-m.optimize()
+return_value = m.optimize()
 count = 0
 #print('obj: %d'% m.objVal)
 '''

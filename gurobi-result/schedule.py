@@ -1,8 +1,10 @@
 from gurobipy import *
 from function_tool import combine, lcms
 from getport import *
-
+import time
 from ecmp import *
+
+import numpy as np
 
 m = Model('Protorype example_type1')
 
@@ -15,6 +17,8 @@ IFG = 96     # inter frame gap, 單位是bit,假設在1Gbps線路上傳,則是 9
 obj = 0.0  #目標式參數
 procedelay = 1
 
+start_time = time.time()
+
 send_src = []   #紀錄哪些節點是host發送端
 path_node = []  #紀錄哪些節點是中繼的switch
 
@@ -22,7 +26,28 @@ path_node = []  #紀錄哪些節點是中繼的switch
 n = 0
 tmp_list = []
 tt_count = []
-fp = open("tt_information.txt",'r')
+'''
+frame_numbers = 25 #記錄目前打算排成的TT數量,random產生
+host_node = [1,2,3,4,5,6]
+period_list = [100,150,200]
+
+fo = open("Limited_flow_data.txt", 'w')
+for j in range(frame_numbers):
+    src = np.random.choice(host_node)
+    dest = np.random.choice(host_node)
+    period = np.random.choice(period_list)
+    size = np.random.randint(46,101)
+
+    while src == dest:
+        src = np.random.choice(host_node)
+        dest = np.random.choice(host_node)
+    fo.write(str(period)+' '+str(src)+' '+str(dest)+' '+str(size)+' '+str(j+1)+'\n')
+fo.close()
+'''
+
+
+#fp = open("tt_information.txt",'r')
+fp = open("Limited_flow_data.txt",'r')
 for i in fp:
     globals()["tt{}".format(n+1)] = []
     a = "tt"+str(n+1)
@@ -51,6 +76,7 @@ for i in range(n):
     a = "tt"+str(i+1)
     tti = eval(a)
     va = "x"+str(i+1)
+    #globals()['x{}'.format(i+1)] = m.addVar(1,2,3,4,5,6,7,8,9,10,11,12,vtype = GRB.INTEGER, name = va)  #offset的變數宣告完畢
     globals()['x{}'.format(i+1)] = m.addVar(lb = 0,ub = int(int(tti[0])-1),vtype = GRB.INTEGER, name = va)  #offset的變數宣告完畢
     tti.append(eval(va))
     #print("tt list :", tti)
@@ -95,11 +121,11 @@ for i in pair:
             ca = "c"+str(c_number)
             c_number = c_number+1
             # 把x1和tt1結合起來,產生限制式
-            m.addConstr(ttj[5]-tti[5]+l*ttj[0]-k*tti[0]-M*eval(va)<=-(ttj[6]+0.096+1), ca)  #要保留多少gate就可以直接在0.096後面加1或n
+            m.addConstr(ttj[5]-tti[5]+l*ttj[0]-k*tti[0]-M*eval(va)<=-(ttj[6]+0.096), ca)  #要保留多少gate就可以直接在0.096後面加1或n
             #宣告c0 c1 c2編號
             ca = "c"+str(c_number)
             c_number = c_number+1
-            m.addConstr(tti[5]-ttj[5]+k*tti[0]-l*ttj[0]+M*eval(va)<=M-(tti[6]+0.096+1), ca)
+            m.addConstr(tti[5]-ttj[5]+k*tti[0]-l*ttj[0]+M*eval(va)<=M-(tti[6]+0.096), ca)
             x_number = x_number+1
             #print("x_number: => ",x_number)
 
@@ -122,7 +148,7 @@ m.setObjective(obj, GRB.MINIMIZE)
 
 
 m.update()
-return_value = m.optimize()
+m.optimize()
 count = 0
 #print('obj: %d'% m.objVal)
 '''
@@ -147,6 +173,7 @@ for i in range(len(tt_count)):
     tti = eval(tti)
     print(tti)
 print(hyper_period)
+print(time.time()-start_time)
 '''
 #TODO 利用offset值推算每個 node的xml時間檔
 for i in range(len(tt_count)):

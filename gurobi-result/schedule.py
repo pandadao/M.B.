@@ -175,11 +175,11 @@ for i in range(len(tt_count)):
 print(hyper_period)
 print(time.time()-start_time)
 '''
-#TODO 利用offset值推算每個 node的xml時間檔
+#TODRRRrO 利用offset值推算每個 node的xml時間檔
 for i in range(len(tt_count)):
     tti = "tt"+str(i+1)
     tti = eval(tti)
-    print(tti)
+    print(tti)aaaaa
     
     count_in_hyperperiod = int(hyper_period/int(tti[0]))  # how many times in a hyperperiod
     for tt in range(count_in_hyperperiod):

@@ -5,6 +5,7 @@ third-party tool, install from web guide
 from gurobipy import *
 import time
 import numpy as np
+from operator import itemgetter
 
 
 '''
@@ -32,21 +33,11 @@ tmp_list = []
 tt_count = []
 
 not_sorted_link = []# 紀錄尚未進行排程的link
+link_dict = {}
 
 start_time = time.time()
 
 
-fo = open('topology_information.txt', 'r')
-for i in fo:
-    not_sorted_link.append(i)
-    b = i.rstrip('\n')
-    #print("b is ", b)
-    globals()["{}".format(str(i.rstrip('\n')))] = []
-    a = str(i)
-    #print(a)
-    link_name = eval(a)
-    #print(link_name)
-fo.close()
 
 
 #讀取所有TT flow資訊並紀錄
@@ -76,6 +67,25 @@ for i in range(len(tmp_list)):
 #print("hyper period is %d" %hyper_period)
 
 
+#將link記錄下來,產生對應的time slot array
+fo = open('topology_information.txt', 'r')
+for i in fo:
+    not_sorted_link.append(i.rstrip('\n'))
+    b = i.rstrip('\n')
+    #print("b is ", b)
+    globals()["{}".format('l'+str(i.rstrip('\n')))] = [0]*hyper_period
+    a = 'l'+str(i.rstrip('\n'))
+    #print(a)
+    link_name = eval(a)
+    #print(link_name)
+
+    link_dict[b] = 0
+    #print(len(link_name))
+    #print(type(link_name))
+    #link_name[1] = 1
+#print('link_dict is ', link_dict)
+#print('not sorted link: ', not_sorted_link)
+fo.close()
 
 #將tt flow所經過的路徑進行統計權重
 for i in range(len(tt_count)):
@@ -84,11 +94,38 @@ for i in range(len(tt_count)):
     #print(tti)
     count_in_hyperperiod = int(hyper_period/int(tti[0]))
     #print("%s repeat %d times in hyperperiod" %(tti_name, count_in_hyperperiod))
+    src = 'E'+str(tti[1])
+    dest = 'E'+str(tti[2])
+    path = shortestPath(graph_3, src, dest)
+    #print('1 ', path)
 
+    for j in range(len(path)):  #處理字串方便之後運算, [['E1']] => ['E1']
+        path.append(path[0][0])
+        path.pop(0)
+        #print('2 ',path)
+    
+    link_pass = []
+    for i in range(len(path)-1):  #將tt經過的每條link區隔開來
+        link_pass.append(path[i:i+2])
+        link_name = link_pass[i][0]+link_pass[i][1]
+        #print('link_name is',link_name)
+        tmp_cal = link_dict[link_name]   #取出目前link的權重數
+        tmp_cal = tmp_cal+1
+        link_dict[link_name] = tmp_cal
+        link_dict.update()
+    
+sorted_link_weight = {}
+sorted_link_weight = sorted(link_dict.items(), key = itemgetter(1), reverse = True)
+print('sorted_link_weight is', sorted_link_weight)
+#print(type(sorted_link_weight))  result is list
+#print(type(link_dict))   result is dict
 
+not_sorted_link.clear()
+for i in range(len(sorted_link_weight)):
+    not_sorted_link.append(sorted_link_weight[i][0])
 
-
-
+print(type(not_sorted_link))
+print(not_sorted_link)
 #如果未排序的link還有剩下,則繼續排程
 #while len(not_sorted_link):
 

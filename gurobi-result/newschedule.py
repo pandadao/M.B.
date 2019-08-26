@@ -74,7 +74,12 @@ for i in fo:
     b = i.rstrip('\n')
     #print("b is ", b)
     globals()["{}".format('l'+str(i.rstrip('\n')))] = [0]*hyper_period
+    globals()["tt{}".format(str(i.rstrip('\n')))] = []
     a = 'l'+str(i.rstrip('\n'))
+    #b = 'tt'+str(i.rstrip('\n'))
+    #print(b)
+    #link_tt = eval(b)
+    #print(link_tt)
     #print(a)
     link_name = eval(a)
     #print(link_name)
@@ -105,14 +110,23 @@ for i in range(len(tt_count)):
         #print('2 ',path)
     
     link_pass = []
-    for i in range(len(path)-1):  #將tt經過的每條link區隔開來
-        link_pass.append(path[i:i+2])
-        link_name = link_pass[i][0]+link_pass[i][1]
+    for k in range(len(path)-1):  #將tt經過的每條link區隔開來
+        link_pass.append(path[k:k+2])
+        link_name = link_pass[k][0]+link_pass[k][1]
+
         #print('link_name is',link_name)
         tmp_cal = link_dict[link_name]   #取出目前link的權重數
         tmp_cal = tmp_cal+1
         link_dict[link_name] = tmp_cal
         link_dict.update()
+
+        #記錄每條link是哪些tt經過
+        link_record = "tt"+link_name
+        #print("link_record", link_record)
+        link_record = eval(link_record)
+        link_record.append("tt"+str(i+1))
+        #print(link_record)
+
     
 sorted_link_weight = {}
 sorted_link_weight = sorted(link_dict.items(), key = itemgetter(1), reverse = True)
@@ -124,10 +138,12 @@ not_sorted_link.clear()
 for i in range(len(sorted_link_weight)):
     not_sorted_link.append(sorted_link_weight[i][0])
 
-print(type(not_sorted_link))
-print(not_sorted_link)
-#如果未排序的link還有剩下,則繼續排程
-#while len(not_sorted_link):
+#print(type(not_sorted_link))
+#print(not_sorted_link)
+
+
+# TODO 開始針對每個link進行排程
+while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
 
 
 

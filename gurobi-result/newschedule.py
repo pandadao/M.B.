@@ -58,7 +58,8 @@ for i in fp:
 fp.close()
 
 # 求hyper period
-pair = combine(tt_count, 2)
+#pair = combine(tt_count, 2)
+#print(pair)
 for i in range(len(tmp_list)):
     hyper_period = lcms(int(tmp_list[i]), hyper_period)
 
@@ -147,7 +148,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
     schedule_link = 'tt'+not_sorted_link[0]
     print(schedule_link)
     schedule_link = eval(schedule_link)
-    print(schedule_link)
+    print(schedule_link)   #ttExEy = [1, 2, 3 ...]
 
     '''
     gurobi限制式所需的變數
@@ -162,8 +163,11 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
         for tt in schedule_link:
             tmp_schedule_tt.append(tt)
             #print(tmp_schedule_tt)
-            
+        pair = []
+        pair = combine(tmp_schedule_tt, 2)
+        print("pair", pair)
         #宣告每個TT的offset變數
+        #TODO 這個offset變數應該要先檢查是否有足夠的time slot, 需要設定!= 條件
         count_schedule_tt = len(tmp_schedule_tt)
         for numbers in range(count_schedule_tt):
             a = "tt"+str(tmp_schedule_tt[numbers])
@@ -187,7 +191,83 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
             m.addConstr(tti[5]<=tti[0]-tti[6]-0.096, ca)
             #print('1')
 
-        #宣告限制式
+        #宣告限制式(2), 進行frame一前一後排程
+        for i in pair:
+            tt_i = "tt"+str(i[0])
+            tt_j = "tt"+str(i[1])
+            tti = eval(tt_i)
+            ttj = eval(tt_j)
+
+            a = int(hyper_period/int(tti[0]))
+            b = int(hyper_period/int(ttj[0]))
+            
+            for k in range(a):
+                for l in range(b):
+                    va = "x"+str(x_number+1)
+                    globals()['x{}'.format(x_number+1)] = m.addVar(lb = 0, ub = 1, vtype = GRB.INTEGER, name = va)
+                    #宣告c0 c1 c2等編號
+                    ca = "c"+str(c_number)
+                    c_number = c_number+1
+                    #把x1跟tt1結合起來,產生限制式
+                    m.addConstr(ttj[5]-tti[5]+l*ttj[0]-k*tti[0]-M*eval(va)<= -(ttj[6]+0.096),ca)
+                    #如果想讓gate多保留time slot,就在0.096後面加1或n
+                    ca = "c"+str(c_number)
+                    c_number = c_number+1
+                    m.addConstr(tti[5]-ttj[5]+k*tti[0]-l*ttj[0]+M*eval(va)<= M-(tti[6]+0.096),ca)
+                    x_number = x_number+1
+
+                    #TODO offset求出後,需要回推至每條link上,將time slot填進每個link的時間軸上
+
+        for i in range(count_schedule_tt):
+            tt_i = "tt"+str(tmp_schedule_tt[i])
+            tti = eval(tt_i)
+            tmp_varaible = "tt"+not_sorted_link[0]
+            tmp, nodesrc, nodedest = tmp_varaible.split('E')
+            src = 'E'+str(tti[1])
+            dest = 'E'+str(tti[2])
+            path = []
+            path = shortestPath(graph_3, src,dest)
+            hop = len(path) - 2
+            a = int(hyper_period/int(tti[0]))
+            for pi in range(a):#計算一個hyperperiod內要傳送幾次tti
+                obj = tti[5]+pi*tti[0]+hop*tti[6]+0.1*hop  #TODO 0.1是propagation delay, 應該要依照真實topology求出來
+
+        m.setObjective(obj, GRB.MINIMIZE)
+        m.update()
+        m.optimize()
+
+        count = 0
+
+        for v in m.getVars():
+            count = count+1
+            if count > count_schedule_tt:
+                break
+            else:
+                print('%s:%d' %(v.varName, v.x))
+                #將offset放進對應的tt內部
+                tti = 'tt'+str(tmp_schedule_tt[count-1])
+                tti = eval(tti)
+                tti[5] = int(v.x)
+                print(tti)
+
+
+
+
+
+
+
+
+            '''
+            查找列表中所有特定值的位置
+            [i for i in range(len(a)) if a[i] == 1]
+            print(a) #[1,2,3,1]
+            #result => [0,3]
+            '''
+
+            #TODO 產生目標式
+        m.reset(0)
+
+
 
 
 

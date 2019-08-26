@@ -94,6 +94,7 @@ for i in range(ttinumber):
     tti.append(tti_L)
     ca = "c"+str(c_number)
     c_number = c_number+1
+    print(tti)
     m.addConstr(tti[5]<=tti[0]-tti[6]-0.096, ca)
     
 

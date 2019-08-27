@@ -144,7 +144,7 @@ for i in range(len(sorted_link_weight)):
 
 #print(link_dict)
 #print(sorted_link_weight)
-# TODO 開始針對每個link進行排程
+#  開始針對每個link進行排程
 while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
     schedule_link = 'tt'+not_sorted_link[0]
     print(schedule_link)

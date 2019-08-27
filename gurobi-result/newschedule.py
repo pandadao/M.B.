@@ -302,7 +302,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
             '''
 
             #TODO 產生目標式
-        m.reset(0)
+        m.reset()
         print('\n')
 
 
@@ -337,6 +337,5 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
     tmp_schedule_tt.clear()
     #排完要pop掉這個link
     not_sorted_link.pop(0)
-
 
 

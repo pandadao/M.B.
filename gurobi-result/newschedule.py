@@ -88,7 +88,7 @@ for i in fo:
     #print(len(link_name))
     #print(type(link_name))
     #link_name[1] = 1
-print('link_dict is ', link_dict)
+#print('link_dict is ', link_dict)
 #print('not sorted link: ', not_sorted_link)
 fo.close()
 
@@ -128,9 +128,10 @@ for i in range(len(tt_count)):
         #print(link_record)
 
     
+print('link_dict is ', link_dict)
 sorted_link_weight = {}
 sorted_link_weight = sorted(link_dict.items(), key = itemgetter(1), reverse = True)
-#print('sorted_link_weight is', sorted_link_weight)
+print('sorted_link_weight is', sorted_link_weight)
 #print(type(sorted_link_weight))  result is list
 #print(type(link_dict))   result is dict
 
@@ -216,21 +217,53 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                     m.addConstr(tti[5]-ttj[5]+k*tti[0]-l*ttj[0]+M*eval(va)<= M-(tti[6]+0.096),ca)
                     x_number = x_number+1
 
-                    #TODO offset求出後,需要回推至每條link上,將time slot填進每個link的時間軸上
 
         for i in range(count_schedule_tt):
             tt_i = "tt"+str(tmp_schedule_tt[i])
             tti = eval(tt_i)
             tmp_varaible = "tt"+not_sorted_link[0]
             tmp, nodesrc, nodedest = tmp_varaible.split('E')
+            nodesrc, tmp = nodesrc.split('t')
+            print(tmp, nodesrc, nodedest)
             src = 'E'+str(tti[1])
             dest = 'E'+str(tti[2])
             path = []
             path = shortestPath(graph_3, src,dest)
-            hop = len(path) - 2
+            print(path)
+            #hop = len(path) - (path.index('E'+nodesrc)+1)
+            #hop = len(path) - 2
+            Enodesrc = 'E'+str(nodesrc)
+            print('Enodesrc:',Enodesrc)
+            inde = path.index([Enodesrc])
+            print('inde:', inde)
+            hop = len(path) - (inde+1)      #推算從路徑上某個node到這個tt終點還剩下幾個hop
+            print('hop', hop)
             a = int(hyper_period/int(tti[0]))
+            
+            propagation_count = 0
+
+            for j in range(len(path)):  #處理字串方便之後運算, [['E1']] => ['E1']
+                path.append(path[0][0])
+                path.pop(0)
+            
+            for calculate in range(hop):
+                nowsrc = path[inde]
+                nowdest = path[inde+1]
+                yo = topology_3[nowsrc][nowdest]['propDelay']
+                print('yo', yo)
+                propagation_count = propagation_count+yo
+                print('propagation ', propagation_count)
+                inde = inde+1
+
+
+
+
             for pi in range(a):#計算一個hyperperiod內要傳送幾次tti
-                obj = tti[5]+pi*tti[0]+hop*tti[6]+0.1*hop  #TODO 0.1是propagation delay, 應該要依照真實topology求出來
+                #obj = tti[5]+pi*tti[0]+hop*tti[6]+0.1*hop  #TODO 0.1是propagation delay, 應該要依照真實topology求出來=>  done
+                obj = tti[5]+pi*tti[0]+hop*tti[6]  
+                print(type(obj))
+            obj = obj + propagation_count
+            #print(obj)
 
         m.setObjective(obj, GRB.MINIMIZE)
         m.update()
@@ -250,6 +283,10 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                 tti[5] = int(v.x)
                 print(tti)
 
+       
+       #TODO offset求出後,需要回推至每條link上,將time slot填進每個link的時間軸上
+
+
 
 
 
@@ -266,6 +303,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
 
             #TODO 產生目標式
         m.reset(0)
+        print('\n')
 
 
 

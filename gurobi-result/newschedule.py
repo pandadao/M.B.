@@ -259,7 +259,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
 
 
             for pi in range(a):#計算一個hyperperiod內要傳送幾次tti
-                #obj = tti[5]+pi*tti[0]+hop*tti[6]+0.1*hop  #TODO 0.1是propagation delay, 應該要依照真實topology求出來=>  done
+                #obj = tti[5]+pi*tti[0]+hop*tti[6]+0.1*hop  #0.1是propagation delay, 應該要依照真實topology求出來=>  done
                 obj = tti[5]+pi*tti[0]+hop*tti[6]  
                 print(type(obj))
             obj = obj + propagation_count
@@ -301,7 +301,6 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
             #result => [0,3]
             '''
 
-            #TODO 產生目標式
         m.reset()
         print('\n')
 

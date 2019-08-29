@@ -18,6 +18,7 @@ from getport import *
 
 #通用變數區
 M = 100000          # gurobi運算中的or所需之極大值,代替cplex中的either-or功能
+e = 0.0001       #gurobi運算中!=所需要的運算子
 hyper_period = 1    # 所以TT flow的lcm
 IFG = 96            # inter frame gap , fixed number,單位是bit, 假設在1Gpbs上運行則是0.096us, 100M => 0.96 us
 obj = 0.0           # 目標式參數
@@ -79,9 +80,10 @@ for i in fo:
     #print(b)
     #link_tt = eval(b)
     #print(link_tt)
-    #print(a)
+    print(a)  #a = lExtoEy
     link_name = eval(a)
-    #print(link_name)
+    #print('link name')
+    print(link_name) # lExtoEy = [0,0,0,0,0,....]共hyper_period個
 
     link_dict[b] = 0
 
@@ -137,7 +139,7 @@ print('sorted_link_weight is', sorted_link_weight)
 
 not_sorted_link.clear()
 for i in range(len(sorted_link_weight)):
-    not_sorted_link.append(sorted_link_weight[i][0])
+    not_sorted_link.append(sorted_link_weight[i][0])   #依照每條link的權重排序
 
 #print(type(not_sorted_link))
 #print(not_sorted_link)
@@ -146,7 +148,7 @@ for i in range(len(sorted_link_weight)):
 #print(sorted_link_weight)
 #  開始針對每個link進行排程
 while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
-    schedule_link = 'tt'+not_sorted_link[0]
+    schedule_link = 'tt'+not_sorted_link[0]    #ttExEy
     print(schedule_link)
     schedule_link = eval(schedule_link)
     print(schedule_link)   #ttExEy = [1, 2, 3 ...]
@@ -156,27 +158,75 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
     '''
     x_number =  0       # cplex的變數量, x1, x2, x3 ....
     c_number = 0        # 限制式的編號變數
+    n_number = 0        #cplex用於!=的變數量, n1, n2, n3 ....
 
     if len(schedule_link)>0:   #若link上有尚未進行排成的tt則進行最佳化
         m = Model('Protorype example_type1')
         tmp_schedule_tt = []
         
+        y = m.addVar(lb = 0, ub = 1, vtype = GRB.BINARY, name = 'y')
+
         for tt in schedule_link:
-            tmp_schedule_tt.append(tt)
+            tmp_schedule_tt.append(tt)   #紀錄目前要進行排成的tt是哪些
             #print(tmp_schedule_tt)
         pair = []
-        pair = combine(tmp_schedule_tt, 2)
+        pair = combine(tmp_schedule_tt, 2)  #因為每個tt要互相排程,所以將所有組合產出
         print("pair", pair)
         #宣告每個TT的offset變數
         #TODO 這個offset變數應該要先檢查是否有足夠的time slot, 需要設定!= 條件
-        count_schedule_tt = len(tmp_schedule_tt)
+        count_schedule_tt = len(tmp_schedule_tt)  #計算有多少條tt要進行排程
         for numbers in range(count_schedule_tt):
-            a = "tt"+str(tmp_schedule_tt[numbers])
+            a = "tt"+str(tmp_schedule_tt[numbers])  #針對tti進行offset的變數宣告
             tti = eval(a)
             va = "x"+str(x_number+1)
             globals()['x{}'.format(x_number+1)] = m.addVar(lb = 0, ub = int(int(tti[0])-1), vtype = GRB.INTEGER, name = va)  #offset變數宣告完畢
             tti.append(eval(va))
             x_number = x_number+1
+
+            #檢查tt的offset值是否不能等於某些數,如果某個time slot已經被排程則不能塞進這個time slot內部
+            ttsrc = 'E'+ tti[1]
+            ttdest = 'E' + tti[2]
+            path = shortestPath(graph_3, ttsrc, ttdest)
+            lname = 'l'+path[0][0]+'to'+path[1][0]
+            lname = eval(lname)
+            print('lname: ', lname)
+            lE6toE8[0] = 1
+            print(lE6toE8)
+            position = []
+            for posi in range(len(lname)):
+                if lname[posi] == 1:
+                    position.append(posi)
+                else:
+                    pass
+            print('can not use time slot is ')
+            print(position)
+            if position:
+                for notuse in range(len(position)):
+                    na = 'n'+str(n_number)
+                    print('na is ', na)
+                    globals()['n{}'.format(n_number)] = m.addVar(lb = 0, ub = int(hyper_period), vtype = GRB.INTEGER, name = na)
+                    na = eval(na)
+                    print('na is', na)
+                    tmp_number = position[notuse]  #知道第幾個time slot不能用, 進行!= 限制事宣告
+                    print('tmp_number is', tmp_number)
+                    ca = "c"+str(c_number)
+                    m.addConstr(na == int(tmp_number), ca)
+                    n_number = n_number+1
+                    c_number = c_number+1
+
+                    ca = "c"+str(c_number)
+                    m.addConstr(na-tti[5]+M*y>=e, ca)
+                    c_number = c_number+1
+                    ca = "c"+str(c_number)
+                    m.addConstr(na-tti[5]+M*y<=M-e, ca)
+                    c_number = c_number+1
+
+            else:
+                print("link's time slots all can use")
+
+            
+
+
         
         # 檢查TT長度是否超過自身週期,限制式(1): 0<= tti.offset + tti.L+IFG time <= tt.p
         ttinumber = x_number  # 紀錄產生了多少個offset變數,注意x_number,假設有4條tt要排成,則現在的x_number為4
@@ -191,6 +241,10 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
             c_number = c_number +1
             m.addConstr(tti[5]<=tti[0]-tti[6]-0.096, ca)
             #print('1')
+        
+
+
+
 
         #宣告限制式(2), 進行frame一前一後排程
         for i in pair:
@@ -270,7 +324,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
         m.optimize()
 
         count = 0
-
+        '''
         for v in m.getVars():
             count = count+1
             if count > count_schedule_tt:
@@ -282,7 +336,10 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                 tti = eval(tti)
                 tti[5] = int(v.x)
                 print(tti)
-
+        '''
+        for v in m.getVars():
+            #if 'x' in v.varName:
+            print('%s:%d'%(v.varName, v.x))
        
        #TODO offset求出後,需要回推至每條link上,將time slot填進每個link的時間軸上
 
@@ -337,4 +394,4 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
     #排完要pop掉這個link
     not_sorted_link.pop(0)
 
-
+#nothing

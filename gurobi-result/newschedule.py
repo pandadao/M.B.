@@ -83,7 +83,7 @@ for i in fo:
     print(a)  #a = lExtoEy
     link_name = eval(a)
     #print('link name')
-    print(link_name) # lExtoEy = [0,0,0,0,0,....]共hyper_period個
+    #print(link_name) # lExtoEy = [0,0,0,0,0,....]共hyper_period個
 
     link_dict[b] = 0
 
@@ -130,10 +130,10 @@ for i in range(len(tt_count)):
         #print(link_record)
 
     
-print('link_dict is ', link_dict)
+#print('link_dict is ', link_dict)
 sorted_link_weight = {}
 sorted_link_weight = sorted(link_dict.items(), key = itemgetter(1), reverse = True)
-print('sorted_link_weight is', sorted_link_weight)
+#print('sorted_link_weight is', sorted_link_weight)
 #print(type(sorted_link_weight))  result is list
 #print(type(link_dict))   result is dict
 
@@ -171,7 +171,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
             #print(tmp_schedule_tt)
         pair = []
         pair = combine(tmp_schedule_tt, 2)  #因為每個tt要互相排程,所以將所有組合產出
-        print("pair", pair)
+        #print("pair", pair)
         #宣告每個TT的offset變數
         #TODO 這個offset變數應該要先檢查是否有足夠的time slot, 需要設定!= 條件
         count_schedule_tt = len(tmp_schedule_tt)  #計算有多少條tt要進行排程
@@ -260,10 +260,40 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
             tt_j = "tt"+str(i[1])
             tti = eval(tt_i)
             ttj = eval(tt_j)
+            tti_A = 0
+            ttj_B = 0
 
             a = int(hyper_period/int(tti[0]))
             b = int(hyper_period/int(ttj[0]))
+
+            #推算此node前的所有耗費時間
+            tti_src = 'E'+str(tti[1])
+            tti_dest = 'E'+str(tti[2])
+
+            ttj_src = 'E'+str(ttj[1])
+            ttj_dest = 'E'+str(ttj[2])
             
+            ttipath = shortestPath(graph_3, tti_src, tti_dest)
+            ttjpath = shortestPath(graph_3, ttj_src, ttj_dest)
+
+            tmp_varaible = "tt"+not_sorted_link[0]
+            tmp, nodesrc, nodedest = tmp_varaible.split('E')
+            nodesrc, tmp = nodesrc.split('t')  # nodesrc和noddedest是排程中的link的src & dest, 以純數字表示
+            nodesrc = 'E'+str(nodesrc)
+            nodedest = 'E'+str(nodedest)
+
+            tti_n_hop = ttipath[nodesrc]
+            print('tti_n_hop ', tti_n_hop)
+            ttj_n_hop = ttjpath[nodesrc]
+            print('ttj_n_hop ', ttj_n_hop)
+
+            #計算tti在這個node之前所有的transmission time 和propagation time等時間
+            
+
+
+            #計算ttj在這個node之前所有的transmission time 和propagation time等時間
+
+
             for k in range(a):
                 for l in range(b):
                     va = "x"+str(x_number+1)
@@ -279,7 +309,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                     m.addConstr(tti[5]-ttj[5]+k*tti[0]-l*ttj[0]+M*eval(va)<= M-(tti[6]+0.096),ca)
                     x_number = x_number+1
 
-
+        
         for i in range(count_schedule_tt):
             tt_i = "tt"+str(tmp_schedule_tt[i])
             tti = eval(tt_i)
@@ -319,7 +349,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
 
 
 
-
+            #產生目標式
             for pi in range(a):#計算一個hyperperiod內要傳送幾次tti
                 #obj = tti[5]+pi*tti[0]+hop*tti[6]+0.1*hop  #0.1是propagation delay, 應該要依照真實topology求出來=>  done
                 obj = tti[5]+pi*tti[0]+hop*tti[6]  

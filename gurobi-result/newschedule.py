@@ -190,7 +190,15 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
             lname = 'l'+path[0][0]+'to'+path[1][0]
             lname = eval(lname)
             print('lname: ', lname)
-            lE6toE8[0] = 1
+            '''
+            lE3toE7[0] = 1
+            lE3toE7[2] = 1
+            lE1toE7[0] = 1
+            lE1toE7[1] = 1
+            lE4toE8[0] = 1
+            lE4toE8[1] = 1
+            lE4toE8[88] = 1
+            '''
             print(lE6toE8)
             position = []
             for posi in range(len(lname)):
@@ -337,9 +345,21 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                 tti[5] = int(v.x)
                 print(tti)
         '''
+        offsetname = []
+        for i in range(count_schedule_tt):
+            s = 'x'+str(i+1)
+            offsetname.append(s)
         for v in m.getVars():
-            #if 'x' in v.varName:
-            print('%s:%d'%(v.varName, v.x))
+            for n in range(len(offsetname)):
+                if offsetname[n] == v.varName:
+                    print('%s:%d'%(v.varName, v.x))
+                    tti = 'tt'+str(tmp_schedule_tt[n])
+                    tti = eval(tti)
+                    tti[5] = int(v.x)
+                    print(tti)
+                else:
+                    pass
+            
        
        #TODO offset求出後,需要回推至每條link上,將time slot填進每個link的時間軸上
 
@@ -362,13 +382,6 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
         print('\n')
 
 
-
-
-
-
-
-        
-
         #排成過的tt需要清除掉,所以要將link上紀錄排程過的tt移除
         fo = open('topology_information.txt', 'r')
         for record in fo:
@@ -380,9 +393,6 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                 except:
                     pass
         fo.close()
-
-
-
 
     
     else:    #若link上沒有需要排成的tt則跳過這個link

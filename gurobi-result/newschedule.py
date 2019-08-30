@@ -202,9 +202,11 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
             lE1toE7[1] = 1
             lE4toE8[0] = 1
             lE4toE8[1] = 1
-            lE4toE8[88] = 1
-            '''
+            lE4toE8[98] = 1
+            print(lE4toE8)
             #print(lE6toE8)
+            '''
+            #lE2toE7[99] = 1
             position = []
             for posi in range(len(lname)):
                 if lname[posi] == 1:
@@ -386,6 +388,34 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
             #print(obj)
         '''
         #產生從tt source開始推算的目標式
+        obj = 0.0
+        for i in range(count_schedule_tt):
+            tt_i = "tt"+str(tmp_schedule_tt[i])
+            tti = eval(tt_i)
+            ttsrc = 'E'+str(tti[1])
+            ttdest = 'E'+str(tti[2])
+            ttpath = shortestPath(graph_3, ttsrc, ttdest)
+            
+            for j in range(len(ttpath)):    #path string operating
+                ttpath.append(ttpath[0][0])
+                ttpath.pop(0)
+
+            print(ttpath)
+            
+            a = int(hyper_period/int(tti[0]))  #tt 重複幾次/hyperperiod
+            ttipandttioffset = 0
+            for n in range(a):
+                ttipandttioffset = tti[5]+ttipandttioffset + n*tti[0] 
+
+            #求出tti走玩全部路徑的propdelay和transmission delay
+            ttpropandtran = 0
+            for p in range(len(ttpath)-1):
+                nowsrc = ttpath[p]
+                nowdest = ttpath[p+1]
+                ttpropandtran = ttpropandtran + tti[6] + int(topology_3[nowsrc][nowdest]['propDelay'])
+                #print('1')
+            obj = ttipandttioffset + ttpropandtran
+
 
 
         m.setObjective(obj, GRB.MINIMIZE)

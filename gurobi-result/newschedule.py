@@ -38,7 +38,6 @@ start_time = time.time()
 
 
 
-
 #讀取所有TT flow資訊並紀錄
 fp = open('Limited_flow_data.txt', 'r')
 for i in fp:
@@ -63,8 +62,8 @@ fp.close()
 #print(pair)
 for i in range(len(tmp_list)):
     hyper_period = lcms(int(tmp_list[i]), hyper_period)
-
 #print("hyper period is %d" %hyper_period)
+
 
 
 #將link記錄下來,產生對應的time slot array
@@ -93,6 +92,8 @@ for i in fo:
 #print('link_dict is ', link_dict)
 #print('not sorted link: ', not_sorted_link)
 fo.close()
+
+
 
 #將tt flow所經過的路徑進行統計權重
 for i in range(len(tt_count)):
@@ -129,13 +130,14 @@ for i in range(len(tt_count)):
         link_record.append(str(i+1))
         #print(link_record)
 
-    
 #print('link_dict is ', link_dict)
 sorted_link_weight = {}
 sorted_link_weight = sorted(link_dict.items(), key = itemgetter(1), reverse = True)
 #print('sorted_link_weight is', sorted_link_weight)
 #print(type(sorted_link_weight))  result is list
 #print(type(link_dict))   result is dict
+
+
 
 not_sorted_link.clear()
 for i in range(len(sorted_link_weight)):
@@ -146,6 +148,9 @@ for i in range(len(sorted_link_weight)):
 
 #print(link_dict)
 #print(sorted_link_weight)
+
+
+
 #  開始針對每個link進行排程
 while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
     schedule_link = 'tt'+not_sorted_link[0]    #ttExEy
@@ -189,7 +194,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
             path = shortestPath(graph_3, ttsrc, ttdest)
             lname = 'l'+path[0][0]+'to'+path[1][0]
             lname = eval(lname)
-            print('lname: ', lname)
+            #print('lname: ', lname)
             '''
             lE3toE7[0] = 1
             lE3toE7[2] = 1
@@ -199,7 +204,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
             lE4toE8[1] = 1
             lE4toE8[88] = 1
             '''
-            print(lE6toE8)
+            #print(lE6toE8)
             position = []
             for posi in range(len(lname)):
                 if lname[posi] == 1:
@@ -231,9 +236,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
 
             else:
                 print("link's time slots all can use")
-
             
-
 
         
         # 檢查TT長度是否超過自身週期,限制式(1): 0<= tti.offset + tti.L+IFG time <= tt.p
@@ -250,8 +253,6 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
             m.addConstr(tti[5]<=tti[0]-tti[6]-0.096, ca)
             #print('1')
         
-
-
 
 
         #宣告限制式(2), 進行frame一前一後排程
@@ -274,7 +275,15 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
             ttj_dest = 'E'+str(ttj[2])
             
             ttipath = shortestPath(graph_3, tti_src, tti_dest)
+            for j in range(len(ttipath)):
+                ttipath.append(ttipath[0][0])
+                ttipath.pop(0)
+            #print(ttipath)
             ttjpath = shortestPath(graph_3, ttj_src, ttj_dest)
+            for j in range(len(ttjpath)):
+                ttjpath.append(ttjpath[0][0])
+                ttjpath.pop(0)
+                
 
             tmp_varaible = "tt"+not_sorted_link[0]
             tmp, nodesrc, nodedest = tmp_varaible.split('E')
@@ -282,17 +291,34 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
             nodesrc = 'E'+str(nodesrc)
             nodedest = 'E'+str(nodedest)
 
-            tti_n_hop = ttipath[nodesrc]
-            print('tti_n_hop ', tti_n_hop)
-            ttj_n_hop = ttjpath[nodesrc]
-            print('ttj_n_hop ', ttj_n_hop)
+            tti_n_hop = ttipath.index(nodesrc)
+            #print('tti_n_hop ', tti_n_hop)
+            ttj_n_hop = ttjpath.index(nodesrc)
+            #print('ttj_n_hop ', ttj_n_hop)
+
 
             #計算tti在這個node之前所有的transmission time 和propagation time等時間
-            
-
-
+            if tti_n_hop > 0:
+                for ttith in range(tti_n_hop):
+                    tmp_src = ttipath[ttith]
+                    #print('tmp_src', tmp_src)
+                    tmp_dest = ttipath[ttith+1]
+                    #print('transmittion time is', tti[6])
+                    #print(topology_3[tmp_src][tmp_dest]['propDelay'])
+                    tti_A = tti_A + tti[6] + topology_3[tmp_src][tmp_dest]['propDelay']
+            else:
+                pass
             #計算ttj在這個node之前所有的transmission time 和propagation time等時間
 
+            if ttj_n_hop > 0:
+                for ttjth in range(ttj_n_hop):
+                    tmp_src = ttjpath[ttjth]
+                    tmp_dest = ttjpath[ttjth+1]
+                    ttj_B = ttj_B + ttj[6] + topology_3[tmp_src][tmp_dest]['propDelay']
+            else:
+                pass
+            print('tti_A ', tti_A)
+            print('ttj_B ', ttj_B)
 
             for k in range(a):
                 for l in range(b):
@@ -302,14 +328,16 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                     ca = "c"+str(c_number)
                     c_number = c_number+1
                     #把x1跟tt1結合起來,產生限制式
-                    m.addConstr(ttj[5]-tti[5]+l*ttj[0]-k*tti[0]-M*eval(va)<= -(ttj[6]+0.096),ca)
+                    m.addConstr(ttj[5]-tti[5]+l*ttj[0]-k*tti[0]-M*eval(va)<= tti_A-(ttj_B+ttj[6]+0.096),ca)
                     #如果想讓gate多保留time slot,就在0.096後面加1或n
                     ca = "c"+str(c_number)
                     c_number = c_number+1
-                    m.addConstr(tti[5]-ttj[5]+k*tti[0]-l*ttj[0]+M*eval(va)<= M-(tti[6]+0.096),ca)
+                    m.addConstr(tti[5]-ttj[5]+k*tti[0]-l*ttj[0]+M*eval(va)<= M+ttj_B-tti_A-(tti[6]+0.096),ca)
                     x_number = x_number+1
 
         
+        '''
+        #產生從當前link上所推算的目標式
         for i in range(count_schedule_tt):
             tt_i = "tt"+str(tmp_schedule_tt[i])
             tti = eval(tt_i)
@@ -356,6 +384,9 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                 print(type(obj))
             obj = obj + propagation_count
             #print(obj)
+        '''
+        #產生從tt source開始推算的目標式
+
 
         m.setObjective(obj, GRB.MINIMIZE)
         m.update()
@@ -375,6 +406,9 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                 tti[5] = int(v.x)
                 print(tti)
         '''
+
+
+
         offsetname = []
         for i in range(count_schedule_tt):
             s = 'x'+str(i+1)
@@ -395,12 +429,6 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
 
 
 
-
-
-
-
-
-
             '''
             查找列表中所有特定值的位置
             [i for i in range(len(a)) if a[i] == 1]
@@ -410,6 +438,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
 
         m.reset()
         print('\n')
+
 
 
         #排成過的tt需要清除掉,所以要將link上紀錄排程過的tt移除
@@ -428,10 +457,9 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
     else:    #若link上沒有需要排成的tt則跳過這個link
         #print('else')
         pass
-    
+ 
+
 
     tmp_schedule_tt.clear()
     #排完要pop掉這個link
     not_sorted_link.pop(0)
-
-#nothing

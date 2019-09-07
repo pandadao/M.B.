@@ -22,7 +22,7 @@ e = 0.0001       #gurobi運算中!=所需要的運算子
 hyper_period = 1    # 所以TT flow的lcm
 IFG = 96            # inter frame gap , fixed number,單位是bit, 假設在1Gpbs上運行則是0.096us, 100M => 0.96 us
 obj = 0.0           # 目標式參數
-
+interframegap = 0.096
 send_src = []       # 紀錄host發送端
 path_node = []      # 紀錄哪些結點是中繼的switch
 
@@ -153,10 +153,10 @@ for i in range(len(sorted_link_weight)):
 
 #  開始針對每個link進行排程
 while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
-    schedule_link = 'tt'+not_sorted_link[0]    #ttExEy
-    print(schedule_link)
+    schedule_link = 'tt'+not_sorted_link[0]    #ttExtoEy
+    print("Now will schedule the link ",schedule_link)
     schedule_link = eval(schedule_link)
-    print(schedule_link)   #ttExEy = [1, 2, 3 ...]
+    #print(schedule_link)   #ttExEy = [1, 2, 3 ...]
 
     '''
     gurobi限制式所需的變數
@@ -166,6 +166,9 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
     n_number = 0        #cplex用於!=的變數量, n1, n2, n3 ....
 
     if len(schedule_link)>0:   #若link上有尚未進行排成的tt則進行最佳化
+
+        print("Now will schedule the link ",schedule_link)
+
         m = Model('Protorype example_type1')
         tmp_schedule_tt = []
         
@@ -417,7 +420,6 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
             obj = ttipandttioffset + ttpropandtran
 
 
-
         m.setObjective(obj, GRB.MINIMIZE)
         m.update()
         m.optimize()
@@ -438,7 +440,6 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
         '''
 
 
-
         offsetname = []
         for i in range(count_schedule_tt):
             s = 'x'+str(i+1)
@@ -456,15 +457,68 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
             
        
        #TODO offset求出後,需要回推至每條link上,將time slot填進每個link的時間軸上
+        for i in range(count_schedule_tt):
+            operating_tt = 'tt'+str(tmp_schedule_tt[i])  #目前要操作的tt,將這個tt會佔用的每條link slot算出來
+            print("目前要排成 ", operating_tt)
+            operating_tt = eval(operating_tt)
+            repeat_time = int(hyper_period/int(operating_tt[0]))
+            print("repeat times is ", repeat_time)
+            tt_start = 'E'+ str(operating_tt[1])
+            tt_end = 'E' + str(operating_tt[2])
+            path = shortestPath(graph_3, tt_start, tt_end)
+            #字串處理
+            for p in range(len(path)):
+                path.append(path[0][0])
+                path.pop(0)
+            print("處理過的path", path)
+            hop = len(path)
+            first_offset = operating_tt[5]
+            for times in range(repeat_time):
+                for nodeth in range(hop-1):
+                    #print(nodeth)
+                    if path[nodeth] == tt_start:
+                        #找出現在要計算哪一條link
+                        nodesrc  = path[nodeth]
+                        nodedest = path[nodeth+1]
+                        linkname = "l"+nodesrc+"to"+nodedest
+                        #print("now calculating the link ", linkname)
+                        linkname = eval(linkname)
+                        #print(linkname)
+                        
+                        #求出這條link的propagation delay
+                        linkpropagationdelay = topology_3[nodesrc][nodedest]['propDelay']
+                        #print("this link's propagation delay is ", linkpropagationdelay)
 
+                        ttoffset = operating_tt[5]+times*operating_tt[0]
+                        linkname[ttoffset] = linkname[ttoffset] + 1
+                        nexthop_tt_start_time = ttoffset + operating_tt[6]+linkpropagationdelay
+                        #print(linkname)
+                        
 
+                    else:
+                        nodesrc = path[nodeth]
+                        nodedest = path[nodeth+1]
+                        linkname = "l"+nodesrc+"to"+nodedest
+                        
+                        #print("now calculating the link ", linkname)
+                        linkname = eval(linkname)
+                        #print(linkname)
+                        
+                        #求出這條link的propagation delay
+                        linkpropagationdelay = topology_3[nodesrc][nodedest]['propDelay']
+                        #print("this link's propagation delay is ", linkpropagationdelay)
+                        #計算switch的gate需要開啟的時間點以及開啟多久
+                        gate_open_time = math.floor(nexthop_tt_start_time)
+                        gate_keep_time = math.ceil(nexthop_tt_start_time+operating_tt[6]+interframegap)-gate_open_time
 
-            '''
-            查找列表中所有特定值的位置
-            [i for i in range(len(a)) if a[i] == 1]
-            print(a) #[1,2,3,1]
-            #result => [0,3]
-            '''
+                        for keeptime in range(gate_keep_time):
+                            linkoffset = (gate_open_time+keeptime)%int(hyper_period)
+                            #print("linkoffset: ", linkoffset)
+                            linkname[linkoffset] = linkname[linkoffset]+1
+                            #print(linkname)
+
+                        nexthop_tt_start_time = nexthop_tt_start_time+linkpropagationdelay+operating_tt[6]
+
 
         m.reset()
         print('\n')

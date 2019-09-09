@@ -225,7 +225,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                     globals()['n{}'.format(n_number)] = m.addVar(lb = 0, ub = int(hyper_period), vtype = GRB.INTEGER, name = na)
                     na = eval(na)
                     print('na is', na)
-                    tmp_number = position[notuse]  #知道第幾個time slot不能用, 進行!= 限制事宣告
+                    tmp_number = position[notuse]  #知道tti第一條link上第幾個time slot不能用, 進行!= 限制事宣告
                     print('tmp_number is', tmp_number)
                     ca = "c"+str(c_number)
                     m.addConstr(na == int(tmp_number), ca)

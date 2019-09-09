@@ -1,4 +1,7 @@
 from gurobipy import *
+import math
+'''
+#not equal != 的實作
 
 for i in range(4):
     m = Model('Protorype example_type1')
@@ -31,3 +34,14 @@ for i in range(4):
         print('%s:%d' %(v.varName, v.x))
 
     m.reset()
+'''
+M = 10000
+m = Model('Protorype exanple_type1')
+x1 = m.addVar(lb = 0, vtype = GRB.INTEGER, name = 'x1')
+y = m.addVar(lb = 0, ub = 1, vtype = GRB.BINARY, name = 'y')
+m.addConstr(x1+M*y>=1, 'c1')
+m.addConstr(x1+M*y<=3, 'c2')
+
+m.setObjective(x1, GRB.MINIMIZE)
+m.update()
+m.optimize()

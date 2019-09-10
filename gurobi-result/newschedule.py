@@ -6,7 +6,7 @@ from gurobipy import *
 import time
 import numpy as np
 from operator import itemgetter
-
+import math
 
 '''
 self develop function, package together
@@ -500,7 +500,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                         nodedest = path[nodeth+1]
                         linkname = "l"+nodesrc+"to"+nodedest
                         
-                        #print("now calculating the link ", linkname)
+                        print("now calculating the link ", linkname)
                         linkname = eval(linkname)
                         #print(linkname)
                         
@@ -515,7 +515,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                             linkoffset = (gate_open_time+keeptime)%int(hyper_period)
                             #print("linkoffset: ", linkoffset)
                             linkname[linkoffset] = linkname[linkoffset]+1
-                            #print(linkname)
+                            print(linkname)
 
                         nexthop_tt_start_time = nexthop_tt_start_time+linkpropagationdelay+operating_tt[6]
 

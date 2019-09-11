@@ -455,8 +455,19 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                 else:
                     pass
             
-       
-       #TODO offset求出後,需要回推至每條link上,將time slot填進每個link的時間軸上
+        #將link上的tt依照所有的offset值排序
+        tmp_array = []
+        for i in range(count_schedule_tt):
+            operating_tt_name = 'tt'+str(tmp_schedule_tt[i])
+            operating_tt = eval(operating_tt_name)
+            for timess in range(int(int(hyper_period)/operating_tt[0])):
+                tmp_array.append([operating_tt_name, operating_tt[5]+timess*operating_tt[0]])
+        link_group_tt = sorted(tmp_array, key = itemgetter(1))
+        print("link_group_tt", link_group_tt)
+
+
+
+        #TODO offset求出後,需要回推至每條link上,將time slot填進每個link的時間軸上
         for i in range(count_schedule_tt):
             operating_tt = 'tt'+str(tmp_schedule_tt[i])  #目前要操作的tt,將這個tt會佔用的每條link slot算出來
             print("目前要排成 ", operating_tt)

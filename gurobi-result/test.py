@@ -1,5 +1,11 @@
 from gurobipy import *
 import math
+
+from operator import itemgetter
+
+b = [[1,2,3,4,5], [54,3,2,1], [6,7,5,3,7]]
+yo = sorted(b, key = itemgetter(2))
+print(yo)
 '''
 #not equal != 的實作
 

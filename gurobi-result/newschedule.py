@@ -466,8 +466,8 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
         print("link_group_tt", link_group_tt)
 
 
-
-        #TODO offset求出後,需要回推至每條link上,將time slot填進每個link的時間軸上
+        #依照每個tt進行time slot的推算
+        long_link_group_tt = len(link_group_tt)
         for i in range(count_schedule_tt):
             operating_tt = 'tt'+str(tmp_schedule_tt[i])  #目前要操作的tt,將這個tt會佔用的每條link slot算出來
             print("目前要排成 ", operating_tt)

@@ -181,7 +181,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
         pair = combine(tmp_schedule_tt, 2)  #因為每個tt要互相排程,所以將所有組合產出
         #print("pair", pair)
         #宣告每個TT的offset變數
-        #TODO 這個offset變數應該要先檢查是否有足夠的time slot, 需要設定!= 條件
+        #這個offset變數應該要先檢查是否有足夠的time slot, 需要設定!= 條件
         count_schedule_tt = len(tmp_schedule_tt)  #計算有多少條tt要進行排程
         for numbers in range(count_schedule_tt):
             a = "tt"+str(tmp_schedule_tt[numbers])  #針對tti進行offset的變數宣告
@@ -455,7 +455,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                 else:
                     pass
             
-        #將link上的tt依照所有的offset值排序
+        #將link上的tt依照所有的offset值排序, 0,1,100,101 sort
         tmp_array = []
         for i in range(count_schedule_tt):
             operating_tt_name = 'tt'+str(tmp_schedule_tt[i])
@@ -463,11 +463,75 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
             for timess in range(int(int(hyper_period)/operating_tt[0])):
                 tmp_array.append([operating_tt_name, operating_tt[5]+timess*operating_tt[0]])
         link_group_tt = sorted(tmp_array, key = itemgetter(1))
-        print("link_group_tt", link_group_tt)
+        print("\033[1;31;40m\tlink_group_tt %s\033[0m"%( link_group_tt))  #link_group_tt is [['tt1',0],['tt2',2],['tt1',100],['tt2',102]]
+        #print("\033[1;31;40m\tlink_group_tt length is %d\033[0m"%(len(link_group_tt)))
+
 
 
         #依照每個tt進行time slot的推算
-        long_link_group_tt = len(link_group_tt)
+        length_link_group_tt = len(link_group_tt)
+        for i in range(length_link_group_tt):
+            operating_tt = link_group_tt[i][0]
+            print("目前要排成 ", operating_tt)
+            operating_tt = eval(operating_tt)
+            tt_start = 'E'+ str(operating_tt[1])
+            tt_end = 'E' + str(operating_tt[2])
+            path = shortestPath(graph_3, tt_start, tt_end)
+            #字串處理
+            for p in range(len(path)):
+                path.append(path[0][0])
+                path.pop(0)
+            print("處理過的path", path)
+            first_offset = operating_tt[5]
+            #找出要推算的link
+            hop = len(path)
+            for nodeth in range(hop-1):
+                #print(nodeth)
+                if path[nodeth] == tt_start:
+                    #找出現在要計算哪一條link
+                    nodesrc  = path[nodeth]
+                    nodedest = path[nodeth+1]
+                    linkname = "l"+nodesrc+"to"+nodedest
+                    #print("now calculating the link ", linkname)
+                    linkname = eval(linkname)
+                    #print(linkname)
+                    
+                    #求出這條link的propagation delay
+                    linkpropagationdelay = topology_3[nodesrc][nodedest]['propDelay']
+                    #print("this link's propagation delay is ", linkpropagationdelay)
+
+                    ttoffset = operating_tt[5]
+                    linkname[ttoffset] = linkname[ttoffset] + 1
+                    nexthop_tt_start_time = ttoffset + operating_tt[6]+linkpropagationdelay
+                    #print(linkname)
+                    
+
+                else:
+                    nodesrc = path[nodeth]
+                    nodedest = path[nodeth+1]
+                    linkname = "l"+nodesrc+"to"+nodedest
+                    
+                    print("now calculating the link ", linkname)
+                    linkname = eval(linkname)
+                    #print(linkname)
+                    
+                    #求出這條link的propagation delay
+                    linkpropagationdelay = topology_3[nodesrc][nodedest]['propDelay']
+                    #print("this link's propagation delay is ", linkpropagationdelay)
+                    #計算switch的gate需要開啟的時間點以及開啟多久
+                    gate_open_time = math.floor(nexthop_tt_start_time)
+                    gate_keep_time = math.ceil(nexthop_tt_start_time+operating_tt[6]+interframegap)-gate_open_time
+
+                    for keeptime in range(gate_keep_time):
+                        linkoffset = (gate_open_time+keeptime)%int(hyper_period)
+                        #print("linkoffset: ", linkoffset)
+                        linkname[linkoffset] = linkname[linkoffset]+1
+                        print(linkname)
+
+                    nexthop_tt_start_time = nexthop_tt_start_time+linkpropagationdelay+operating_tt[6]
+            
+
+        '''
         for i in range(count_schedule_tt):
             operating_tt = 'tt'+str(tmp_schedule_tt[i])  #目前要操作的tt,將這個tt會佔用的每條link slot算出來
             print("目前要排成 ", operating_tt)
@@ -529,7 +593,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                             print(linkname)
 
                         nexthop_tt_start_time = nexthop_tt_start_time+linkpropagationdelay+operating_tt[6]
-
+        '''
 
         m.reset()
         print('\n')

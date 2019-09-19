@@ -74,6 +74,7 @@ for i in fo:
     #print("b is ", b)
     globals()["{}".format('l'+str(i.rstrip('\n')))] = [0]*hyper_period   # lExEy = [0, 1, 0], link的time slot
     globals()["tt{}".format(str(i.rstrip('\n')))] = []  # ttExtoEy = [], 儲存通過這個link有哪些tt
+    globals()["switchto{}".format(str(r.strip('\n')))] = [] # switchtoExtoEy = [{}] save the time slot is open or close, and the other information like start tt and close tt flow.  
     a = 'l'+str(i.rstrip('\n'))
     #b = 'tt'+str(i.rstrip('\n'))
     #print(b)

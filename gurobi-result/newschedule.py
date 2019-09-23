@@ -74,7 +74,7 @@ for i in fo:
     #print("b is ", b)
     globals()["{}".format('l'+str(i.rstrip('\n')))] = [0]*hyper_period   # lExEy = [0, 1, 0], link的time slot
     globals()["tt{}".format(str(i.rstrip('\n')))] = []  # ttExtoEy = [], 儲存通過這個link有哪些tt
-    globals()["switchto{}".format(str(r.strip('\n')))] = [] # switchtoExtoEy = [{}] save the time slot is open or close, and the other information like start tt and close tt flow.  
+    globals()["switchto{}".format(str(i.strip('\n')))] = [] # switchtoExtoEy = [{}] save the time slot is open or close, and the other information like start tt and close tt flow.  
     a = 'l'+str(i.rstrip('\n'))
     #b = 'tt'+str(i.rstrip('\n'))
     #print(b)
@@ -393,7 +393,11 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
         '''
         #產生從tt source開始推算的目標式
         obj = 0.0
+        ttipandttioffset = 0
+        #nowttpropandtran = 0
+        ttpropandtran = 0
         for i in range(count_schedule_tt):
+            nowttpropandtran = 0
             tt_i = "tt"+str(tmp_schedule_tt[i])
             tti = eval(tt_i)
             ttsrc = 'E'+str(tti[1])
@@ -407,18 +411,25 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
             print(ttpath)
             
             a = int(hyper_period/int(tti[0]))  #tt 重複幾次/hyperperiod
-            ttipandttioffset = 0
+            #ttipandttioffset = 0
             for n in range(a):
                 ttipandttioffset = tti[5]+ttipandttioffset + n*tti[0] 
 
             #求出tti走玩全部路徑的propdelay和transmission delay
-            ttpropandtran = 0
+            #ttpropandtran = 0
             for p in range(len(ttpath)-1):
                 nowsrc = ttpath[p]
                 nowdest = ttpath[p+1]
-                ttpropandtran = ttpropandtran + tti[6] + int(topology_3[nowsrc][nowdest]['propDelay'])
+                tmpuse = topology_3[nowsrc][nowdest]['propDelay']
+                print("tmpuse is",tmpuse)
+                nowttpropandtran = nowttpropandtran + tti[6] + tmpuse
+                print('nowttpropandtran is', nowttpropandtran)
                 #print('1')
-            obj = ttipandttioffset + ttpropandtran
+            ttpropandtran = nowttpropandtran*a +ttpropandtran
+
+            
+        print("ttpropandtran is ", ttpropandtran)
+        obj = ttipandttioffset + ttpropandtran 
 
 
         m.setObjective(obj, GRB.MINIMIZE)
@@ -501,7 +512,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                     linkpropagationdelay = topology_3[nodesrc][nodedest]['propDelay']
                     #print("this link's propagation delay is ", linkpropagationdelay)
 
-                    ttoffset = operating_tt[5]
+                    ttoffset = link_group_tt[i][1]
                     linkname[ttoffset] = linkname[ttoffset] + 1
                     nexthop_tt_start_time = ttoffset + operating_tt[6]+linkpropagationdelay
                     #print(linkname)

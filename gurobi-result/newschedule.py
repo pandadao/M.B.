@@ -210,7 +210,6 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
             print(lE4toE8)
             #print(lE6toE8)
             '''
-            #lE2toE7[99] = 1
             position = []
             for posi in range(len(lname)):
                 if lname[posi] == 1:
@@ -504,9 +503,9 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                     nodesrc  = path[nodeth]
                     nodedest = path[nodeth+1]
                     linkname = "l"+nodesrc+"to"+nodedest
-                    #print("now calculating the link ", linkname)
+                    print("now calculating the link ", linkname)
                     linkname = eval(linkname)
-                    #print(linkname)
+                    print(linkname)
                     
                     #求出這條link的propagation delay
                     linkpropagationdelay = topology_3[nodesrc][nodedest]['propDelay']
@@ -515,7 +514,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                     ttoffset = link_group_tt[i][1]
                     linkname[ttoffset] = linkname[ttoffset] + 1
                     nexthop_tt_start_time = ttoffset + operating_tt[6]+linkpropagationdelay
-                    #print(linkname)
+                    print(linkname)
                     
 
                 else:

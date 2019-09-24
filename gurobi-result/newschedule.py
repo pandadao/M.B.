@@ -408,6 +408,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
             obj = obj + propagation_count
             #print(obj)
         '''
+        '''
         #產生從tt source開始推算的目標式
         obj = 0.0
         ttipandttioffset = 0
@@ -447,6 +448,15 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
             
         print("ttpropandtran is ", ttpropandtran)
         obj = ttipandttioffset + ttpropandtran 
+
+        '''
+        #修改目標式,單純對offset進行summary
+        obj = 0.0
+        for i in range(count_schedule_tt):
+            tt_i = "tt"+str(tmp_schedule_tt[i])
+            tti = eval(tt_i)
+            a = int(hyper_period/int(tti[0]))
+            obj = obj+tti[5]*a
 
 
         m.setObjective(obj, GRB.MINIMIZE)

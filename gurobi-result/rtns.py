@@ -23,6 +23,7 @@ hyper_period = 1    # 所以TT flow的lcm
 IFG = 96            # inter frame gap , fixed number,單位是bit, 假設在1Gpbs上運行則是0.096us, 100M => 0.96 us
 obj = 0.0           # 目標式參數
 constraint_count = 0 #紀錄總共有幾條constraint, 用於宣告限制式時所需的變數
+y_count = 0         #紀錄每次的big M solve
 
 interframegap = 0.096
 
@@ -224,3 +225,57 @@ for i in range(len(all_linkname)):
 
 
 #宣告constraint (2)跟(5)
+for i in range(len(all_linkname)):
+    nowlinkname = all_linkname[i]
+    nowlink = "tt"+nowlinkname
+    nowlink = eval(nowlink)
+    
+    if len(nowlink)>0:
+
+        linkpair_name = all_linkname[i]+"_pair"
+        linkpair = eval(linkpair_name)
+
+        #開始宣告限制式(2)
+        for j in linkpair:
+            nowtt_i = "tt"+str(j[0])
+            nowtt_j = "tt"+str(j[1])
+            nowtti = eval(nowtt_i)
+            nowttj = eval(nowtt_j)
+
+            a = int(hyper_period/int(nowtti[0]))
+            b = int(hyper_period/int(nowttj[0]))
+
+            i_offsetname = nowlinkname+"_"+nowtt_i
+            j_offsetname = nowlinkname+"_"+nowtt_j
+            i_offset = eval(i_offsetname)
+            j_offset = eval(j_offsetname)
+
+            for k in range(a):
+                for l in range(b):
+                    ya = "y"+str(y_count+1) # big M solve的y變數
+                    globals()['y{}'.format(y_count+1)] = m.addVar(lb = 0, ub = 1, vtype = GRB.BINARY, name = ya)
+
+
+                    ca = "c"+str(constraint_count+1)
+                    y_count = y_count+1
+                    constraint_count = constraint_count+1
+
+                    m.addConstr(j_offset-i_offset+l*nowttj[0]-k*nowtti[0]-M*eval(ya)<=-(nowttj[6]+interframegap), ca)
+
+                    ca = "c"+str(constraint_count+1)
+                    constraint_count = constraint_count+1
+                    m.addConstr(i_offset-j_offset+k*nowtti[0]-l*nowttj[0]+M*eval(ya)<=M-(nowtti[6]+interframegap) ,ca)
+
+
+    else:
+        pass
+
+
+    
+
+m.setObjective(obj, GRB.MINIMIZE)
+m.update()
+m.optimize()
+
+for v in m.getVars():
+    print("%s:%d"%(v.varName, v.x))

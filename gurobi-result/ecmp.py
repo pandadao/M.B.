@@ -51,7 +51,7 @@ def Dijkstra(g,start,end=None):
                 q[w] = vwLength
                 p[w] += [v] 
     return (d,p)        
-
+#TODO: this will return ecmp not shortest path, need to change
 def shortestPath(g,start,end):
 
     d,p = Dijkstra(g,start,end)

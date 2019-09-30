@@ -226,6 +226,7 @@ for i in range(len(all_linkname)):
 
 #宣告constraint (2)跟(5)
 for i in range(len(all_linkname)):
+    #print("i is", all_linkname[i])
     nowlinkname = all_linkname[i]
     nowlink = "tt"+nowlinkname
     nowlink = eval(nowlink)
@@ -266,6 +267,73 @@ for i in range(len(all_linkname)):
                     constraint_count = constraint_count+1
                     m.addConstr(i_offset-j_offset+k*nowtti[0]-l*nowttj[0]+M*eval(ya)<=M-(nowtti[6]+interframegap) ,ca)
 
+
+        #宣告限制式(5)
+        linksrc, linkdest = all_linkname[i].split('to')   #確認該link是否為src, 因為src端不會有限制式(5)的問題
+        if linksrc in allhost:
+            pass
+        else:
+            for j in linkpair:
+                nowtt_i = "tt"+str(j[0])
+                nowtt_j = "tt"+str(j[1])
+                nowtti = eval(nowtt_i)
+                nowttj = eval(nowtt_j)
+
+                a = int(hyper_period/int(nowtti[0]))
+                b = int(hyper_period/int(nowttj[0]))
+                
+                nowtti_src = "E"+str(nowtti[1])
+                nowtti_dest = "E"+str(nowtti[2])
+                nowtti_path = shortestPath(graph_3, nowtti_src, nowtti_dest)
+
+        
+                for k in range(len(nowtti_path)):  #處理字串方便之後運算, [['E1']] => ['E1']
+                    nowtti_path.append(nowtti_path[0][0])
+                    nowtti_path.pop(0)
+                
+
+                nowttj_src = "E"+str(nowttj[1])
+                nowttj_dest = "E"+str(nowttj[2])
+                nowttj_path = shortestPath(graph_3, nowttj_src, nowttj_dest)
+
+                for k in range(len(nowttj_path)):  #處理字串方便之後運算, [['E1']] => ['E1']
+                    nowttj_path.append(nowttj_path[0][0])
+                    nowttj_path.pop(0)
+
+                nowtti_hop = nowtti_path.index(linksrc)
+                nowttj_hop = nowttj_path.index(linksrc)
+
+                tti_prenode = nowtti_path[nowtti_hop-1]
+                ttj_prenode = nowttj_path[nowttj_hop-1]
+
+                tti_prelink_name = nowtti_path[nowtti_hop-1]+"to"+linksrc+"_"+nowtt_i
+                ttj_prelink_name = nowttj_path[nowttj_hop-1]+"to"+linksrc+"_"+nowtt_j
+
+                #get prelink offset
+                tti_preoffset = eval(tti_prelink_name)
+                ttj_preoffset = eval(ttj_prelink_name)
+
+                #get prelink propagation delay
+                tti_prepropagation = topology_3[tti_prenode][linksrc]['propDelay']
+                ttj_prepropagation = topology_3[ttj_prenode][linksrc]['propDelay']
+
+
+                for k in range(a):
+                    for l in range(b):
+                        ya = "y"+str(y_count+1)
+                        globals()['y{}'.format(y_count+1)] = m.addVar(lb = 0, ub = 1, vtype = GRB.BINARY, name = ya)
+                        y_count = y_count+1
+
+                        ca = "c"+str(constraint_count+1)
+                        constraint = constraint_count+1
+
+                        m.addConstr(ttj_preoffset-tti_preoffset+l*nowttj[0]-k*nowtti[0]-M*eval(ya)<=tti_prepropagation-ttj_prepropagation)   #若是要加上transmission delay請參照推導的公式
+
+                        ca = "c"+str(constraint_count+1)
+                        constraint_count = constraint_count+1
+
+                        m.addConstr(tti_preoffset-ttj_preoffset+k*nowtti[0]-l*nowttj[0]+M*eval(ya)<=M+ttj_prepropagation-tti_prepropagation)
+                
 
     else:
         pass

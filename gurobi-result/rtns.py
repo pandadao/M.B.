@@ -33,6 +33,7 @@ tt_count = []   #紀錄全部的tt數量
 
 not_sorted_link = []# 紀錄尚未進行排程的link
 link_dict = {}
+all_linkname = []  #儲存所有的link名稱
 
 start_time = time.time()
 
@@ -83,18 +84,49 @@ for i in range(len(tmp_list)):
 #print("hyper period is %d" %hyper_period)
 
 
-#將link名稱紀錄下來
-fo = open("topology_information.txt", 'r')
+
+#將link記錄下來,產生對應的time slot array
+fo = open('topology_information.txt', 'r')
 for i in fo:
     not_sorted_link.append(i.rstrip('\n'))
     b = i.rstrip('\n')
+    all_linkname.append(b)
+    #print("all_linkname is", all_linkname)
+    #print("b is ", b)
+    globals()["{}".format('l'+str(i.rstrip('\n')))] = [0]*hyper_period   # lExEy = [0, 1, 0], link的time slot
+    globals()["tt{}".format(str(i.rstrip('\n')))] = []  # ttExtoEy = [], 儲存通過這個link有哪些tt
+    globals()["nodeto{}".format(str(i.strip('\n')))] = [] # nodetoExtoEy = [{}] save the time slot is open or close, and the other information like start tt and close tt flow.  
+    a = 'l'+str(i.rstrip('\n'))
+    #b = 'tt'+str(i.rstrip('\n'))
+    #print(b)
+    #link_tt = eval(b)
+    #print(link_tt)
+    print(a)  #a = lExtoEy
+    link_name = eval(a)
+    #print('link name')
+    #print(link_name) # lExtoEy = [0,0,0,0,0,....]共hyper_period個
 
+    link_dict[b] = 0
+
+    #print(len(link_name))
+    #print(type(link_name))
+    #link_name[1] = 1
+#print('link_dict is ', link_dict)
+#print('not sorted link: ', not_sorted_link)
+fo.close()
 
 
 #將tt flow所經過的路徑進行統計權重
 for i in range(len(tt_count)):
     tti_name = "tt"+str(i+1)
     tti = eval(tti_name)
+
+    #計算tti在1Gbps擴僕下的transmission time, 並存進tti的資訊中
+    tt_i = "tt"+str(i+1)
+    tti = eval(tt_i)
+    tti_L = (tti[3]+30)*8/1000  #頻寬為1Gbps, 算出來的單位是us
+    tti.append(tti_L)
+
     #print(tti)
     count_in_hyperperiod = int(hyper_period/int(tti[0]))
     #print("%s repeat %d times in hyperperiod" %(tti_name, count_in_hyperperiod))
@@ -121,25 +153,16 @@ for i in range(len(tt_count)):
 
         #記錄每條link是哪些tt經過
         link_record = "tt"+link_name
-        #print("link_record", link_record)
+        print("link_record", link_record)
         link_record = eval(link_record)
         link_record.append(str(i+1))
-        #print(link_record)
+        print(link_record)
 
 print('link_dict is ', link_dict)
 sorted_link_weight = {}
-sorted_link_weight = sorted(link_dict.items(), key = itemgetter(1), reverse = True)   #sorted_link_weight儲存依照link上有幾條tt flow的排序
+sorted_link_weight = sorted(link_dict.items(), key = itemgetter(1), reverse = True)
+print('sorted_link_weight is', sorted_link_weight)
+#print(type(sorted_link_weight))  result is list
+#print(type(link_dict))   result is dict
 
 
-not_sorted_link.clear()
-for i in range(len(sorted_link_weight)):
-    not_sorted_link.append(sorted_link_weight[i][0])   #依照每條link的權重排序
-
-#print(type(not_sorted_link))
-#print(not_sorted_link)
-
-#print(link_dict)
-#print(sorted_link_weight)
-
-
-#第一步,對每條link上的tti都宣告offset變數

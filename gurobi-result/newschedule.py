@@ -63,6 +63,10 @@ for i in fp:
     a = "tt"+str(n+1)
     tti = eval(a)
     period, start_node, dest_node, length, number = i.rstrip('\n').split(" ")
+
+    #TODO: Limited_flow_data.txt的資訊新增e2e,需要重新修改tti的陣列資訊
+
+
     tti.append(int(period))
     tti.append(start_node)
     tti.append(dest_node)

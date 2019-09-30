@@ -22,7 +22,10 @@ e = 0.0001       #gurobi運算中!=所需要的運算子
 hyper_period = 1    # 所以TT flow的lcm
 IFG = 96            # inter frame gap , fixed number,單位是bit, 假設在1Gpbs上運行則是0.096us, 100M => 0.96 us
 obj = 0.0           # 目標式參數
+constraint_count = 0 #紀錄總共有幾條constraint, 用於宣告限制式時所需的變數
+
 interframegap = 0.096
+
 send_src = []       # 紀錄host發送端
 path_node = []      # 紀錄哪些結點是中繼的switch
 
@@ -30,6 +33,9 @@ path_node = []      # 紀錄哪些結點是中繼的switch
 n = 0
 tmp_list = []
 tt_count = []   #紀錄全部的tt數量
+
+#儲存總共有哪些offset的陣列
+offsetlist = []
 
 not_sorted_link = []# 紀錄尚未進行排程的link
 link_dict = {}
@@ -56,19 +62,20 @@ for i in allhost:
         pass
 print(hostnode)
 
-
+# TODO: 應該要新增一個籃位讀取tti的e2e delay值,所以後續所有的tti陣列排序要重新修改,產生tti的程式也要進行修改
 #讀取所有TT flow資訊並紀錄
 fp = open('Limited_flow_data.txt', 'r')
 for i in fp:
     globals()["tt{}".format(n+1)] = []
     a = "tt"+str(n+1)
     tti = eval(a)
-    period, start_node, dest_node, length, number = i.rstrip('\n').split(" ")
+    period, start_node, dest_node, length, number ,e2e= i.rstrip('\n').split(" ")
     tti.append(int(period))
     tti.append(start_node)
     tti.append(dest_node)
     tti.append(int(length))
     tti.append(int(number))
+    tti.append(int(e2e))
     tmp_list.append(tti[0])
     tt_count.append(n+1)
     n = n+1
@@ -155,9 +162,11 @@ for i in range(len(tt_count)):
         link_record = "tt"+link_name
         print("link_record", link_record)
         link_record = eval(link_record)
-        link_record.append(str(i+1))
+        #link_record.append(str(i+1))
+        link_record.append(i+1)
         print(link_record)
 
+print('all_linkname is', all_linkname)
 print('link_dict is ', link_dict)
 sorted_link_weight = {}
 sorted_link_weight = sorted(link_dict.items(), key = itemgetter(1), reverse = True)
@@ -166,3 +175,52 @@ print('sorted_link_weight is', sorted_link_weight)
 #print(type(link_dict))   result is dict
 
 
+'''
+***  這邊直接宣告gurobi module, 因為這篇Paper是所有的限制式宣告完一起做排程
+'''
+m = Model('Protorype example_type1')
+
+
+#針對每一條link上的TT進行offset的變數宣告
+for i in range(len(all_linkname)):
+    nowlinkname = all_linkname[i]
+    nowlink = "tt"+nowlinkname
+    print('nowlink', nowlink)
+    nowlink = eval(nowlink)
+    print(nowlink)
+
+    linkpair = all_linkname[i]+"_pair"
+    globals()[linkpair] = combine(nowlink, 2)
+    linkpair = eval(linkpair)
+    print("linkpair is", linkpair)
+
+    # 如果link內有tt則進行該tt的offset 宣告,如果沒有的話則繼續迴圈, offset變數為 => ExtoEy_tti (x,y,i)為可變數
+    if len(nowlink)>0:
+        for now in range(len(nowlink)):
+            offsetname = nowlinkname+"_tt"+str(nowlink[now])
+            print("offsetname is", offsetname)
+            
+            nowtt = "tt"+str(nowlink[now])
+            print('nowtt', nowtt)
+            nowtt = eval(nowtt)
+            print(nowtt)
+
+            globals()[offsetname] = m.addVar(lb = 0, ub = int(int(nowtt[0])-1), vtype = GRB.INTEGER, name = offsetname)
+            nowoffset = eval(offsetname)
+            #offsetlist.append(nowoffset)
+            
+            #宣告限制式(1), 0<= offset+tti.L + IFG <= tti.period
+            ca = "c"+str(constraint_count+1)
+            constraint_count = constraint_count+1
+            m.addConstr(nowoffset<=nowtt[0]-nowtt[6]-interframegap, ca)
+
+
+            #print(nowoffset)
+            obj = obj + nowoffset   #objective function is minimize obj 
+            #print(obj)
+
+    else:
+        pass
+
+
+#宣告constraint (2)跟(5)

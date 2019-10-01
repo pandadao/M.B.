@@ -62,7 +62,7 @@ for i in fp:
     globals()["tt{}".format(n+1)] = []
     a = "tt"+str(n+1)
     tti = eval(a)
-    period, start_node, dest_node, length, number = i.rstrip('\n').split(" ")
+    period, start_node, dest_node, length, number ,e2e= i.rstrip('\n').split(" ")
 
     #TODO: Limited_flow_data.txt的資訊新增e2e,需要重新修改tti的陣列資訊
 
@@ -72,6 +72,7 @@ for i in fp:
     tti.append(dest_node)
     tti.append(int(length))
     tti.append(int(number))
+    tti.append(int(e2e))
     tmp_list.append(tti[0])
     tt_count.append(n+1)
     n = n+1
@@ -255,10 +256,10 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                     c_number = c_number+1
 
                     ca = "c"+str(c_number)
-                    m.addConstr(na-tti[5]+M*y>=e, ca)
+                    m.addConstr(na-tti[6]+M*y>=e, ca)
                     c_number = c_number+1
                     ca = "c"+str(c_number)
-                    m.addConstr(na-tti[5]+M*y<=M-e, ca)
+                    m.addConstr(na-tti[6]+M*y<=M-e, ca)
                     c_number = c_number+1
 
             else:
@@ -277,7 +278,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
             print(tti)
             ca = "c"+str(c_number)
             c_number = c_number +1
-            m.addConstr(tti[5]<=tti[0]-tti[6]-0.096, ca)
+            m.addConstr(tti[6]<=tti[0]-tti[7]-0.096, ca)
             #print('1')
         
 
@@ -332,7 +333,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                     tmp_dest = ttipath[ttith+1]
                     #print('transmittion time is', tti[6])
                     #print(topology_3[tmp_src][tmp_dest]['propDelay'])
-                    tti_A = tti_A + tti[6] + topology_3[tmp_src][tmp_dest]['propDelay']
+                    tti_A = tti_A + tti[7] + topology_3[tmp_src][tmp_dest]['propDelay']
             else:
                 pass
             #計算ttj在這個node之前所有的transmission time 和propagation time等時間
@@ -341,7 +342,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                 for ttjth in range(ttj_n_hop):
                     tmp_src = ttjpath[ttjth]
                     tmp_dest = ttjpath[ttjth+1]
-                    ttj_B = ttj_B + ttj[6] + topology_3[tmp_src][tmp_dest]['propDelay']
+                    ttj_B = ttj_B + ttj[7] + topology_3[tmp_src][tmp_dest]['propDelay']
             else:
                 pass
             print('tti_A ', tti_A)
@@ -355,11 +356,11 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                     ca = "c"+str(c_number)
                     c_number = c_number+1
                     #把x1跟tt1結合起來,產生限制式
-                    m.addConstr(ttj[5]-tti[5]+l*ttj[0]-k*tti[0]-M*eval(va)<= tti_A-(ttj_B+ttj[6]+0.096),ca)
+                    m.addConstr(ttj[6]-tti[6]+l*ttj[0]-k*tti[0]-M*eval(va)<= tti_A-(ttj_B+ttj[7]+0.096),ca)
                     #如果想讓gate多保留time slot,就在0.096後面加1或n
                     ca = "c"+str(c_number)
                     c_number = c_number+1
-                    m.addConstr(tti[5]-ttj[5]+k*tti[0]-l*ttj[0]+M*eval(va)<= M+ttj_B-tti_A-(tti[6]+0.096),ca)
+                    m.addConstr(tti[6]-ttj[6]+k*tti[0]-l*ttj[0]+M*eval(va)<= M+ttj_B-tti_A-(tti[7]+0.096),ca)
                     x_number = x_number+1
 
         
@@ -460,7 +461,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
             tt_i = "tt"+str(tmp_schedule_tt[i])
             tti = eval(tt_i)
             a = int(hyper_period/int(tti[0]))
-            obj = obj+tti[5]*a
+            obj = obj+tti[6]*a
 
 
         m.setObjective(obj, GRB.MINIMIZE)
@@ -493,7 +494,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                     print('%s:%d'%(v.varName, v.x))
                     tti = 'tt'+str(tmp_schedule_tt[n])
                     tti = eval(tti)
-                    tti[5] = int(v.x)
+                    tti[6] = int(v.x)
                     print(tti)
                 else:
                     pass
@@ -504,7 +505,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
             operating_tt_name = 'tt'+str(tmp_schedule_tt[i])
             operating_tt = eval(operating_tt_name)
             for timess in range(int(int(hyper_period)/operating_tt[0])):
-                tmp_array.append([operating_tt_name, operating_tt[5]+timess*operating_tt[0]])
+                tmp_array.append([operating_tt_name, operating_tt[6]+timess*operating_tt[0]])
         link_group_tt = sorted(tmp_array, key = itemgetter(1))
         print("\033[1;31;40m\tlink_group_tt %s\033[0m"%( link_group_tt))  #link_group_tt is [['tt1',0],['tt2',2],['tt1',100],['tt2',102]]
         #print("\033[1;31;40m\tlink_group_tt length is %d\033[0m"%(len(link_group_tt)))
@@ -525,7 +526,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                 path.append(path[0][0])
                 path.pop(0)
             print("處理過的path", path)
-            first_offset = operating_tt[5]
+            first_offset = operating_tt[6]
             #找出要推算的link
             hop = len(path)
             for nodeth in range(hop-1):
@@ -549,14 +550,14 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                     mac_addr = topology_3[tt_end]['MAC']
 
                     ttoffset = link_group_tt[i][1]
-                    endtrans = ttoffset+operating_tt[6]+0.096 #該tt從offset開始到傳送結束的時間
+                    endtrans = ttoffset+operating_tt[7]+0.096 #該tt從offset開始到傳送結束的時間
 
                     #儲存host相關xml所需資料
                     evalhost.append({'send':link_group_tt[i][0], 'start':ttoffset, 'end':endtrans, 'queue':7, 'dest': mac_addr, 'size':operating_tt[3]})
                     #print(nodesrc, ' is', evalhost)
 
                     linkname[ttoffset] = linkname[ttoffset] + 1
-                    nexthop_tt_start_time = ttoffset + operating_tt[6]+linkpropagationdelay
+                    nexthop_tt_start_time = ttoffset + operating_tt[7]+linkpropagationdelay
                     print(linkname)
                     
 
@@ -574,7 +575,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                     #print("this link's propagation delay is ", linkpropagationdelay)
                     #計算switch的gate需要開啟的時間點以及開啟多久
                     gate_open_time = math.floor(nexthop_tt_start_time)
-                    gate_keep_time = math.ceil(nexthop_tt_start_time+operating_tt[6]+interframegap)-gate_open_time
+                    gate_keep_time = math.ceil(nexthop_tt_start_time+operating_tt[7]+interframegap)-gate_open_time
 
                     # mark TODO:1. 將switch上各自port會開啟和關閉的時間點以及要處理的tt資訊詳細記錄進nodetoExtoEy內。 2. 仔細計算是否能夠在同一個gate內處理兩格不重疊的tt flow,如果不行則延後新進來的tt傳送時間 
 
@@ -584,7 +585,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                         linkname[linkoffset] = linkname[linkoffset]+1
                         print(linkname)
 
-                    nexthop_tt_start_time = nexthop_tt_start_time+linkpropagationdelay+operating_tt[6]
+                    nexthop_tt_start_time = nexthop_tt_start_time+linkpropagationdelay+operating_tt[7]
             
 
         '''

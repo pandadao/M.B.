@@ -217,7 +217,7 @@ for i in range(len(all_linkname)):
 
 
             #print(nowoffset)
-            obj = obj + nowoffset   #objective function is minimize obj 
+            obj = obj + nowoffset*(hyper_period/nowtt[0])   #objective function is minimize obj 
             #print(obj)
 
     else:
@@ -339,7 +339,49 @@ for i in range(len(all_linkname)):
         pass
 
 
+#宣告限制式(3)跟(4)
+for i in range(len(tt_count)):
+    tt_i = "tt"+str(i+1)
+    tti = eval(tt_i)
+    ttsrc = 'E'+str(tti[1])
+    ttdest = 'E'+str(tti[2])
+    ttpath = shortestPath(graph_3, ttsrc, ttdest)
+    for k in range(len(ttpath)):
+        ttpath.append(ttpath[0][0])
+        ttpath.pop(0)
+
+    #constraint (3), 該tt須等待前面link傳完才能在現在的link開始傳送
+    print("ttpath is ",ttpath)
+    for j in range(len(ttpath)-1):
+        tmp_src = ttpath[j]
+        tmp_dest = ttpath[j+1]
+        if tmp_src in allhost:
+            pass
+        else:
+            presrc = ttpath[j-1]
+            prelink_offsetname = presrc+"to"+tmp_src+"_"+tt_i
+            nowlink_offsetname = tmp_src+"to"+tmp_dest+"_"+tt_i
+
+            prelink_offset = eval(prelink_offsetname)
+            nowlink_offset = eval(nowlink_offsetname)
+
+            prelink_propagation = topology_3[presrc][tmp_src]['propDelay']
+            
+            ca = "c"+str(constraint_count+1)
+            constraint_count = constraint_count+1
+            m.addConstr(prelink_offset-nowlink_offset<=-(tti[6]+prelink_propagation), ca)
+
+    #constraint (4) end to end delay set
+    startoffsetname = ttsrc+"to"+ttpath[1]+"_"+tt_i
+    startoffset = eval(startoffsetname)
+
+    lastoffsetname = ttpath[-2]+"to"+ttpath[-1]+"_"+tt_i
+    lastoffset = eval(lastoffsetname)
     
+    ca = "c"+str(constraint_count+1)
+    constraint_count = constraint_count+1
+    m.addConstr(lastoffset-startoffset<=tti[5]-tti[6], ca)
+
 
 m.setObjective(obj, GRB.MINIMIZE)
 m.update()

@@ -387,5 +387,18 @@ m.setObjective(obj, GRB.MINIMIZE)
 m.update()
 m.optimize()
 
+
+schedule_ans = []
 for v in m.getVars():
-    print("%s:%d"%(v.varName, v.x))
+    if "_" in v.varName:
+        srcdest, tti = v.varName.split("_")
+        src, dest = srcdest.split("to")
+        tti = eval(tti)
+        schedule_ans.append([v.varName, int(v.x), tti[0], tti[2], tti[3], tti[6]])
+        print("%s:%d %d h%s %s(bytes) %.4f"%(v.varName, v.x, tti[0],tti[2], tti[3],tti[6]))
+        print("")
+    else:
+        pass
+
+
+

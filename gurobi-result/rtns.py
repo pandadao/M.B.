@@ -355,12 +355,19 @@ for i in range(len(tt_count)):
     for j in range(len(ttpath)-1):
         tmp_src = ttpath[j]
         tmp_dest = ttpath[j+1]
-        if tmp_src in allhost:
+
+        print("tmp_src is", tmp_src)
+        print("tmp_dest is", tmp_dest)
+        print("allhost is", allhost)
+        if tmp_src in hostnode:
             pass
         else:
             presrc = ttpath[j-1]
             prelink_offsetname = presrc+"to"+tmp_src+"_"+tt_i
             nowlink_offsetname = tmp_src+"to"+tmp_dest+"_"+tt_i
+
+            print("prelink_offsetname is", prelink_offsetname)
+            print("nowlink_offsetname is", nowlink_offsetname)
 
             prelink_offset = eval(prelink_offsetname)
             nowlink_offset = eval(nowlink_offsetname)

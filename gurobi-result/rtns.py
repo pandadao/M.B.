@@ -377,10 +377,13 @@ for i in range(len(tt_count)):
 
     lastoffsetname = ttpath[-2]+"to"+ttpath[-1]+"_"+tt_i
     lastoffset = eval(lastoffsetname)
+    lastlinksrc = ttpath[-2]
+    lastlinkdest = ttpath[-1]
+    lastlinkprop = topology_3[lastlinksrc][lastlinkdest]['propDelay']
     
     ca = "c"+str(constraint_count+1)
     constraint_count = constraint_count+1
-    m.addConstr(lastoffset-startoffset<=tti[5]-tti[6], ca)
+    m.addConstr(lastoffset-startoffset<=tti[5]-tti[6]-lastlinkprop, ca)
 
 
 m.setObjective(obj, GRB.MINIMIZE)

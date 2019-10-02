@@ -103,7 +103,8 @@ for i in fo:
     #print("b is ", b)
     globals()["{}".format('l'+str(i.rstrip('\n')))] = [0]*hyper_period   # lExEy = [0, 1, 0], link的time slot
     globals()["tt{}".format(str(i.rstrip('\n')))] = []  # ttExtoEy = [], 儲存通過這個link有哪些tt
-    globals()["nodeto{}".format(str(i.strip('\n')))] = [] # nodetoExtoEy = [{}] save the time slot is open or close, and the other information like start tt and close tt flow.  
+    globals()["nodeto{}".format(str(i.rstrip('\n')))] = [] # nodetoExtoEy = [{}] save the time slot is open or close, and the other information like start tt and close tt flow. 
+    globals()["{}_schedule".format(str(i.rstrip('\n')))] = []  #儲存此link上的offset值, 格式為[[tt5,0], [tt5,100]]
     a = 'l'+str(i.rstrip('\n'))
     #b = 'tt'+str(i.rstrip('\n'))
     #print(b)
@@ -401,11 +402,21 @@ m.optimize()
 schedule_ans = []
 for v in m.getVars():
     if "_" in v.varName:
-        srcdest, tti = v.varName.split("_")
+        srcdest, tt_i = v.varName.split("_")
         src, dest = srcdest.split("to")
-        tti = eval(tti)
+        tti = eval(tt_i)
         schedule_ans.append([v.varName, int(v.x), tti[0], tti[2], tti[3], tti[6]])
         print("%s:%d %d h%s %s(bytes) %.4f"%(v.varName, v.x, tti[0],tti[2], tti[3],tti[6]))
+
+        tmpschedulename = srcdest+"_schedule"
+        print("tmpschedulename is", tmpschedulename)
+        tmpschedule = eval(tmpschedulename)
+        a = int(hyper_period/tti[0])
+        for i in range(a):
+            tmpoffset = int(v.x + i*tti[0])
+            tmpschedule.append([tt_i, tmpoffset])
+        tmpschedule = sorted(tmpschedule, key=lambda x:x[1])
+        print(tmpschedulename," offset value ", tmpschedule)
         print("")
     else:
         pass

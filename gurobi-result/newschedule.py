@@ -540,11 +540,11 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                     linkname = eval(linkname)
                     print(linkname)
                     evalhost = eval(nodesrc)  # 變數E1 ,格式為 [{}]
-                    #print('nodesrc is', evalhost)
+                    print('nodesrc is', evalhost)
                     
                     #求出這條link的propagation delay
                     linkpropagationdelay = topology_3[nodesrc][nodedest]['propDelay']
-                    #print("this link's propagation delay is ", linkpropagationdelay)
+                    print("this link's propagation delay is ", linkpropagationdelay)
 
                     #get dest MAC
                     mac_addr = topology_3[tt_end]['MAC']
@@ -554,7 +554,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
 
                     #儲存host相關xml所需資料
                     evalhost.append({'send':link_group_tt[i][0], 'start':ttoffset, 'end':endtrans, 'queue':7, 'dest': mac_addr, 'size':operating_tt[3]})
-                    #print(nodesrc, ' is', evalhost)
+                    print(nodesrc, ' is', evalhost)
 
                     linkname[ttoffset] = linkname[ttoffset] + 1
                     nexthop_tt_start_time = ttoffset + operating_tt[7]+linkpropagationdelay
@@ -564,27 +564,37 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                 else:
                     nodesrc = path[nodeth]
                     nodedest = path[nodeth+1]
-                    linkname = "l"+nodesrc+"to"+nodedest
+                    linkname = "l"+nodesrc+"to"+nodedest  #lExtoEy , link's time slot
+                    xmlentry_name = "nodeto"+nodesrc+"to"+nodedest #link's xml entry information
+                    print("xmlentry name is", xmlentry_name)
+                    xmlentry = eval(xmlentry_name)
+                    #print("xmlentry is", xmlentry)
                     
                     print("now calculating the link ", linkname)
                     linkname = eval(linkname)
-                    #print(linkname)
+                    print(linkname)
                     
                     #求出這條link的propagation delay
                     linkpropagationdelay = topology_3[nodesrc][nodedest]['propDelay']
-                    #print("this link's propagation delay is ", linkpropagationdelay)
+                    print("this link's propagation delay is ", linkpropagationdelay)
                     #計算switch的gate需要開啟的時間點以及開啟多久
                     gate_open_time = math.floor(nexthop_tt_start_time)
-                    gate_keep_time = math.ceil(nexthop_tt_start_time+operating_tt[7]+interframegap)-gate_open_time
+                    ttsendtime = nexthop_tt_start_time+operating_tt[7]+interframegap
+                    gate_keep_time = math.ceil(ttsendtime)-gate_open_time
+
+                    print("gate open time at ", gate_open_time)
+                    print("gate keep time is ", gate_keep_time)
 
                     # mark TODO:1. 將switch上各自port會開啟和關閉的時間點以及要處理的tt資訊詳細記錄進nodetoExtoEy內。 2. 仔細計算是否能夠在同一個gate內處理兩格不重疊的tt flow,如果不行則延後新進來的tt傳送時間 
+                    xmlentry.append({'send':link_group_tt[i][0], 'start':nexthop_tt_start_time, 'end':ttsendtime, 'open':gate_open_time, 'length':gate_keep_time, 'bitvector':'00000001'})
 
                     for keeptime in range(gate_keep_time):
                         linkoffset = (gate_open_time+keeptime)%int(hyper_period)
-                        #print("linkoffset: ", linkoffset)
+                        print("linkoffset: ", linkoffset)
                         linkname[linkoffset] = linkname[linkoffset]+1
                         print(linkname)
-
+                    xmlentry = sorted(xmlentry, key = itemgetter('open'))
+                    print(xmlentry)
                     nexthop_tt_start_time = nexthop_tt_start_time+linkpropagationdelay+operating_tt[7]
             
 

@@ -97,7 +97,7 @@ for i in fo:
     #print("b is ", b)
     globals()["{}".format('l'+str(i.rstrip('\n')))] = [0]*hyper_period   # lExEy = [0, 1, 0], link的time slot
     globals()["tt{}".format(str(i.rstrip('\n')))] = []  # ttExtoEy = [], 儲存通過這個link有哪些tt
-    globals()["nodeto{}".format(str(i.strip('\n')))] = [] # nodetoExtoEy = [{}] save the time slot is open or close, and the other information like start tt and close tt flow.  
+    globals()["nodeto{}".format(str(i.strip('\n')))] = [{}]*hyper_period # nodetoExtoEy = [{}] save the time slot is open or close, and the other information like start tt and close tt flow.  
     a = 'l'+str(i.rstrip('\n'))
     #b = 'tt'+str(i.rstrip('\n'))
     #print(b)
@@ -586,12 +586,42 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                     print("gate keep time is ", gate_keep_time)
 
                     # mark TODO:1. 將switch上各自port會開啟和關閉的時間點以及要處理的tt資訊詳細記錄進nodetoExtoEy內。 2. 仔細計算是否能夠在同一個gate內處理兩格不重疊的tt flow,如果不行則延後新進來的tt傳送時間 
-                    xmlentry.append({'send':link_group_tt[i][0], 'start':nexthop_tt_start_time, 'end':ttsendtime, 'open':gate_open_time, 'length':gate_keep_time, 'bitvector':'00000001'})
+                    #xmlentry.append({'send':link_group_tt[i][0], 'start':nexthop_tt_start_time, 'end':ttsendtime, 'open':gate_open_time, 'length':gate_keep_time, 'bitvector':'00000001'})
 
                     for keeptime in range(gate_keep_time):
                         linkoffset = (gate_open_time+keeptime)%int(hyper_period)
                         print("linkoffset: ", linkoffset)
                         linkname[linkoffset] = linkname[linkoffset]+1
+                        #如果該offset重複了,則開始檢查是否為重疊會錯開
+                        if linkname[linkoffset] > 1:
+                            '''
+                            for offsetkey in xmlentry: #找出overlay的tt是哪一條,開始做微調位置的判斷,後排程的tt flow設定為較低priority, 所以調整的是後排成的tt flow
+                                # overlap的情況是start的數字比linkoffset小,並且start+length比linkoffset大,又因為一次排成一條所以只會搜尋出一個狀況
+                                if (offsetkey['start']<= linkoffset) and ((offsetkey['start']+offsetkey['length']-1)>= linkoffset):  #找出是哪個entry影響道到排程的tt offset
+                                    if () and ():  #兩個tt真的有overlap,則把排成的tt往後移動,移動完要確認是否會影響到佔用後面time slot的tt
+                                    else: #檢查這兩個tt是否真的有overlap, 或只是佔用的同一格time slot但是不會互相影響到
+                            '''
+                            try: #此格time slot目前只被一條tt使用,代表可能有機會不overlap
+
+                                s1 = xmlentry[linkoffset]['start']
+                                e1 = xmlentry[linkoffset]['end']
+                                s2 = nexthop_tt_start_time
+                                e2 = ttsendtime
+                                if (e1>=s2) and (s1<=e2):  # 真的重疊了,需重新排成處理
+
+                                else: #假重疊,實際沒有重複到
+                                    tmp = xmlentry[linkoffset]
+                                    xmlentry[linkoffset] = [tmp, {'send':link_group_tt[i][0], 'start':nexthop_tt_start_time, 'end':ttsendtime, 'open':gate_open_time, 'length':gate_keep_time, 'bitvector':'00000001'}]
+                                    linkname[linkoffset] = 1
+                            except:  #這一格已經被兩個tt使用,一定會overlap
+
+
+
+
+                        else:
+                            xmlentry[linkoffset] = {'send':link_group_tt[i][0], 'start':nexthop_tt_start_time, 'end':ttsendtime, 'open':gate_open_time, 'length':gate_keep_time, 'bitvector':'00000001'}
+                            
+
                         print(linkname)
                     xmlentry = sorted(xmlentry, key = itemgetter('open'))
                     print(xmlentry)

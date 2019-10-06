@@ -608,12 +608,15 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                                 s2 = nexthop_tt_start_time
                                 e2 = ttsendtime
                                 if (e1>=s2) and (s1<=e2):  # 真的重疊了,需重新排成處理
+                                    pass
+
 
                                 else: #假重疊,實際沒有重複到
                                     tmp = xmlentry[linkoffset]
                                     xmlentry[linkoffset] = [tmp, {'send':link_group_tt[i][0], 'start':nexthop_tt_start_time, 'end':ttsendtime, 'open':gate_open_time, 'length':gate_keep_time, 'bitvector':'00000001'}]
                                     linkname[linkoffset] = 1
                             except:  #這一格已經被兩個tt使用,一定會overlap
+                                pass
 
 
 
@@ -623,7 +626,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                             
 
                         print(linkname)
-                    xmlentry = sorted(xmlentry, key = itemgetter('open'))
+                    #xmlentry = sorted(xmlentry, key = itemgetter('open'))
                     print(xmlentry)
                     nexthop_tt_start_time = nexthop_tt_start_time+linkpropagationdelay+operating_tt[7]
             
@@ -694,11 +697,23 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
 
         m.reset()
         print('\n')
-        '''
-        for q in hostnode:
-            yoyo = eval(q)
-            print(q, yoyo)
-        '''
+        
+        #列印出每個host要送的tt資訊
+        for mm in hostnode:
+            hostname = mm
+            print(hostname)
+            hostname = eval(hostname)
+            print(hostname)
+
+
+        #列印出每條offset值的狀態
+        fq = open('topology_information.txt', 'r')
+        for ll in fq:
+            linkname = "nodeto"+ll.rstrip('\n')
+            print(linkname)
+            linkname = eval(linkname)
+            print(linkname)
+        
         #排成過的tt需要清除掉,所以要將link上紀錄排程過的tt移除
         fo = open('topology_information.txt', 'r')
         for record in fo:

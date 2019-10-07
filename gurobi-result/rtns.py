@@ -68,6 +68,7 @@ print(hostnode)
 fp = open('Limited_flow_data.txt', 'r')
 for i in fp:
     globals()["tt{}".format(n+1)] = []
+    globals()["tt{}_offset".format(n+1)] = []
     a = "tt"+str(n+1)
     tti = eval(a)
     period, start_node, dest_node, length, number ,e2e= i.rstrip('\n').split(" ")
@@ -133,7 +134,7 @@ for i in range(len(tt_count)):
     #計算tti在1Gbps擴僕下的transmission time, 並存進tti的資訊中
     tt_i = "tt"+str(i+1)
     tti = eval(tt_i)
-    tti_L = (tti[3]+30)*8/1000  #頻寬為1Gbps, 算出來的單位是us
+    tti_L = (tti[3]+29)*8/1000  #頻寬為1Gbps, 算出來的單位是us
     tti.append(tti_L)
 
     #print(tti)
@@ -405,6 +406,12 @@ for v in m.getVars():
         srcdest, tt_i = v.varName.split("_")
         src, dest = srcdest.split("to")
         tti = eval(tt_i)
+
+        ttx_offsetname = tt_i+"_offset"
+        ttx_offset = eval(ttx_offsetname)
+        ttx_offset.append([srcdest, int(v.x), tti[0], tti[6]])
+        print(ttx_offsetname, ttx_offset)
+
         schedule_ans.append([v.varName, int(v.x), tti[0], tti[2], tti[3], tti[6]])
         print("%s:%d %d h%s %s(bytes) %.4f"%(v.varName, v.x, tti[0],tti[2], tti[3],tti[6]))
 
@@ -422,4 +429,45 @@ for v in m.getVars():
         pass
 
 
+queuetime_sum = 0.0
+
+#計算總queueing delay值
+for i in tt_count:
+    tt_i = "tt"+str(i)
+    tti = eval(tt_i)
+    ttsrc = "E"+str(tti[1])
+    ttdest = "E"+str(tti[2])
+    path = shortestPath(graph_3, ttsrc, ttdest)
+    ttx_offsetname = tt_i+"_offset"
+    ttx_offset = eval(ttx_offsetname)
+    
+    path = shortestPath(graph_3, ttsrc, ttdest)
+    for j in range(len(path)):  #處理字串方便之後運算, [['E1']] => ['E1']
+        path.append(path[0][0])
+        path.pop(0)
+
+    arrivetime = 0
+    for j in range(len(path)-1):
+        tmpsrc = path[j]
+        tmpdest = path[j+1]
+        linkname = tmpsrc+"to"+tmpdest
+        proptime = topology_3[tmpsrc][tmpdest]['propDelay']
+        for k in ttx_offset:
+            if linkname in k[0]:
+                gateopen = k[1]
+                hyp = k[2]
+                trans = k[3]
+            else:
+                pass
+        if j == 0: #host開始
+            arrivetime = gateopen+trans+proptime
+            tmpqueueingtime = 0
+
+        else: #其他link
+            tmpqueueingtime = tmpqueueingtime+gateopen-arrivetime
+            arrivetime = gateopen+trans+proptime
+    queuetime_sum = queuetime_sum+tmpqueueingtime*int(hyper_period/int(hyp))
+
+
+print("total queueing time(us) is", queuetime_sum)        
 

@@ -273,7 +273,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
             a = "tt"+str(tmp_schedule_tt[numbers])
             tti = eval(a)
             print(a)
-            tti_L = (tti[3]+30)*8/1000  #頻寬的值這邊統一為1Gbps,算出來的單位為us
+            tti_L = (tti[3]+29)*8/1000  #頻寬的值這邊統一為1Gbps,算出來的單位為us
             tti.append(tti_L)
             print(tti)
             ca = "c"+str(c_number)
@@ -518,6 +518,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
             operating_tt = link_group_tt[i][0]
             print("目前要排成 ", operating_tt)
             operating_tt = eval(operating_tt)
+            print("目前要排成 ", operating_tt)
             tt_start = 'E'+ str(operating_tt[1])
             tt_end = 'E' + str(operating_tt[2])
             path = shortestPath(graph_3, tt_start, tt_end)

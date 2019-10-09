@@ -4,7 +4,7 @@ from function_tool import combine, lcms
 
 frame_numbers =150 #記錄目前打算排成的TT數量,random產生
 host_node = [1,2,3,4,5,6]
-period_list = [100,150,200]
+period_list = [100,200]
 
 hyper_period = 1
 for i in range(len(period_list)):
@@ -25,7 +25,7 @@ for j in range(frame_numbers):
     fo.write(str(period)+' '+str(src)+' '+str(dest)+' '+str(size)+' '+str(j+1)+'\n')
 fo.close()
 '''
-for j in range(50):
+for j in range(75):
 
     src = np.random.choice(host_node)
     dest = np.random.choice(host_node)
@@ -36,7 +36,7 @@ for j in range(50):
         dest = np.random.choice(host_node)
     fo.write(str(period)+' '+str(src)+' '+str(dest)+' '+str(size)+' '+str(j+1)+' '+str(int(hyper_period*0.2))+'\n')
 
-for j in range(100):
+for j in range(75):
 
     src = np.random.choice(host_node)
     dest = np.random.choice(host_node)

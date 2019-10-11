@@ -221,7 +221,7 @@ for i in range(len(all_linkname)):
 
 
             #print(nowoffset)
-            obj = obj + nowoffset*(hyper_period/nowtt[0])   #objective function is minimize obj 
+            obj = obj + nowoffset   #objective function is minimize obj 
             #print(obj)
 
     else:
@@ -413,21 +413,21 @@ for v in m.getVars():
         ttx_offsetname = tt_i+"_offset"
         ttx_offset = eval(ttx_offsetname)
         ttx_offset.append([srcdest, int(v.x), tti[0], tti[6]])
-        print(ttx_offsetname, ttx_offset)
+        #print(ttx_offsetname, ttx_offset)
 
         schedule_ans.append([v.varName, int(v.x), tti[0], tti[2], tti[3], tti[6]])
-        print("%s:%d %d h%s %s(bytes) %.4f"%(v.varName, v.x, tti[0],tti[2], tti[3],tti[6]))
+        #print("%s:%d %d h%s %s(bytes) %.4f"%(v.varName, v.x, tti[0],tti[2], tti[3],tti[6]))
 
         tmpschedulename = srcdest+"_schedule"
-        print("tmpschedulename is", tmpschedulename)
+        #print("tmpschedulename is", tmpschedulename)
         tmpschedule = eval(tmpschedulename)
         a = int(hyper_period/tti[0])
         for i in range(a):
             tmpoffset = int(v.x + i*tti[0])
             tmpschedule.append([tt_i, tmpoffset])
         tmpschedule = sorted(tmpschedule, key=lambda x:x[1])
-        print(tmpschedulename," offset value ", tmpschedule)
-        print("")
+        #print(tmpschedulename," offset value ", tmpschedule)
+        #print("")
     else:
         pass
 

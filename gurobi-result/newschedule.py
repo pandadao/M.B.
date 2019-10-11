@@ -461,7 +461,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
             tt_i = "tt"+str(tmp_schedule_tt[i])
             tti = eval(tt_i)
             a = int(hyper_period/int(tti[0]))
-            obj = obj+tti[6]*a
+            obj = obj
 
 
         m.setObjective(obj, GRB.MINIMIZE)
@@ -552,12 +552,17 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
 
                     ttoffset = link_group_tt[i][1]
                     endtrans = ttoffset+operating_tt[7]+0.096 #該tt從offset開始到傳送結束的時間
+                    ttoffsetkeep = math.ceil(endtrans)-ttoffset
 
                     #儲存host相關xml所需資料
                     evalhost.append({'send':link_group_tt[i][0], 'start':ttoffset, 'end':endtrans, 'queue':7, 'dest': mac_addr, 'size':operating_tt[3]})
                     print(nodesrc, ' is', evalhost)
+                    
+                    #佔用的time slot記錄下來,其它條TT不能佔用
+                    for used in range(ttoffsetkeep):
 
-                    linkname[ttoffset] = linkname[ttoffset] + 1
+                        linkname[ttoffset+used] = linkname[ttoffset+used] + 1
+
                     nexthop_tt_start_time = ttoffset + operating_tt[7]+linkpropagationdelay
                     print(linkname)
                     

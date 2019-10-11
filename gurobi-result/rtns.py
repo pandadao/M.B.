@@ -63,9 +63,11 @@ for i in allhost:
         pass
 print(hostnode)
 
+ttfilename = int(input(" read how much tt data?"))
+
 # TODO: 應該要新增一個籃位讀取tti的e2e delay值,所以後續所有的tti陣列排序要重新修改,產生tti的程式也要進行修改
 #讀取所有TT flow資訊並紀錄
-fp = open('Limited_flow_data.txt', 'r')
+fp = open("Limited_flow_data-%d.txt"%(ttfilename), 'r')
 for i in fp:
     globals()["tt{}".format(n+1)] = []
     globals()["tt{}_offset".format(n+1)] = []
@@ -272,7 +274,8 @@ for i in range(len(all_linkname)):
 
         #宣告限制式(5)
         linksrc, linkdest = all_linkname[i].split('to')   #確認該link是否為src, 因為src端不會有限制式(5)的問題
-        if linksrc in allhost:
+        #if linksrc in allhost:
+        if linksrc in hostnode:
             pass
         else:
             for j in linkpair:
@@ -428,6 +431,7 @@ for v in m.getVars():
     else:
         pass
 
+runtime = time.time()-start_time
 
 queuetime_sum = 0.0
 
@@ -468,6 +472,6 @@ for i in tt_count:
             arrivetime = gateopen+trans+proptime
     queuetime_sum = queuetime_sum+tmpqueueingtime*int(hyper_period/int(hyp))
 
-
+print("rtns total run time is ", runtime, "s")
 print("total queueing time(us) is", queuetime_sum)        
 

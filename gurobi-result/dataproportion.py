@@ -2,7 +2,8 @@ import numpy as np
 
 from function_tool import combine, lcms
 
-frame_numbers =150 #記錄目前打算排成的TT數量,random產生
+frame_numbers =int(input("how many flows: ")) #記錄目前打算排成的TT數量,random產生
+print("generating %d tt flows"%(frame_numbers))
 host_node = [1,2,3,4,5,6]
 period_list = [100,200]
 
@@ -11,8 +12,8 @@ for i in range(len(period_list)):
     hyper_period = lcms(period_list[i], hyper_period)
 print(hyper_period)
 
-fo = open("Limited_flow_data.txt", 'w')
-'''
+fo = open("Limited_flow_data-%d.txt"%(frame_numbers), 'w')
+
 for j in range(frame_numbers):
     src = np.random.choice(host_node)
     dest = np.random.choice(host_node)
@@ -22,7 +23,7 @@ for j in range(frame_numbers):
     while src == dest:
         src = np.random.choice(host_node)
         dest = np.random.choice(host_node)
-    fo.write(str(period)+' '+str(src)+' '+str(dest)+' '+str(size)+' '+str(j+1)+'\n')
+    fo.write(str(period)+' '+str(src)+' '+str(dest)+' '+str(size)+' '+str(j+1)+' '+str(int(hyper_period*0.2))+'\n')
 fo.close()
 '''
 for j in range(75):
@@ -45,7 +46,8 @@ for j in range(75):
     while src == dest:
         src = np.random.choice(host_node)
         dest = np.random.choice(host_node)
-    fo.write(str(period)+' '+str(src)+' '+str(dest)+' '+str(size)+' '+str(j+51)+' '+str(int(hyper_period*0.2))+'\n')
+    fo.write(str(period)+' '+str(src)+' '+str(dest)+' '+str(size)+' '+str(j+76)+' '+str(int(hyper_period*0.2))+'\n')
+'''
 '''
 if (frame_numbers%2) == 1:
     

@@ -57,7 +57,7 @@ print(hostnode)
 
 
 #讀取所有TT flow資訊並紀錄
-fp = open('Limited_flow_data.txt', 'r')
+fp = open('Limited_flow_data-10.txt', 'r')
 for i in fp:
     globals()["tt{}".format(n+1)] = []
     a = "tt"+str(n+1)

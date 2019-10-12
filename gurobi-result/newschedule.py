@@ -188,6 +188,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
     x_number =  0       # cplex的變數量, x1, x2, x3 ....
     c_number = 0        # 限制式的編號變數
     n_number = 0        #cplex用於!=的變數量, n1, n2, n3 ....
+    y_number = 0        #!= 限制式使用的y變數
 
     if len(schedule_link)>0:   #若link上有尚未進行排成的tt則進行最佳化
 
@@ -196,7 +197,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
         m = Model('Protorype example_type1')
         tmp_schedule_tt = []
         
-        y = m.addVar(lb = 0, ub = 1, vtype = GRB.BINARY, name = 'y')
+        #y = m.addVar(lb = 0, ub = 1, vtype = GRB.BINARY, name = 'y')
 
         for tt in schedule_link:
             tmp_schedule_tt.append(tt)   #紀錄目前要進行排成的tt是哪些
@@ -243,11 +244,19 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
             print(position)
             if position:
                 for notuse in range(len(position)):
+                    #不能用的數字宣告成進gurobi的變數中
                     na = 'n'+str(n_number)
                     print('na is ', na)
                     globals()['n{}'.format(n_number)] = m.addVar(lb = 0, ub = int(hyper_period), vtype = GRB.INTEGER, name = na)
                     na = eval(na)
                     print('na is', na)
+
+                    #給每個y有各自的變數
+                    ya = 'y'+str(y_number)
+                    globals()['y{}'.format(y_number)]=m.addVar(lb=0, ub =1, vtype=GRB.BINARY, name=ya)
+                    ya = eval(ya)
+                    y_number = y_number+1
+
                     tmp_number = position[notuse]  #知道tti第一條link上第幾個time slot不能用, 進行!= 限制事宣告
                     print('tmp_number is', tmp_number)
                     ca = "c"+str(c_number)
@@ -256,10 +265,10 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                     c_number = c_number+1
 
                     ca = "c"+str(c_number)
-                    m.addConstr(na-tti[6]+M*y>=e, ca)
+                    m.addConstr(na-tti[6]+M*ya>=e, ca)
                     c_number = c_number+1
                     ca = "c"+str(c_number)
-                    m.addConstr(na-tti[6]+M*y<=M-e, ca)
+                    m.addConstr(na-tti[6]+M*ya<=M-e, ca)
                     c_number = c_number+1
 
             else:

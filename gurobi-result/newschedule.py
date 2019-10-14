@@ -238,7 +238,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
             '''
             position = []
             for posi in range(len(lname)):
-                '''
+                
                 if lname[posi] == 1:
                     position.append(posi)
                 else:
@@ -248,6 +248,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                     pass
                 else:
                     position.append(posi)
+                '''
             print('can not use time slot is ')
             print(position)
             if position:
@@ -614,6 +615,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                             pass
 
                         else:   #overlap, 將發送時間向後移動
+                            print("shift")
                             totalqueueingtime = totalqueueingtime+ e1-s2
                             s2 = e1
                             e2 = s2+nexthop_tt_start_time+operating_tt[7]+interframegap
@@ -736,7 +738,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
 
         m.reset()
         print('\n')
-        
+        '''        
         #列印出每個host要送的tt資訊
         for mm in hostnode:
             hostname = mm
@@ -752,6 +754,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
             print(linkname)
             linkname = eval(linkname)
             print(linkname)
+        '''
         
         #排成過的tt需要清除掉,所以要將link上紀錄排程過的tt移除
         fo = open('topology_information.txt', 'r')
@@ -764,7 +767,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                 except:
                     pass
         fo.close()
-
+        
     
     else:    #若link上沒有需要排成的tt則跳過這個link
         #print('else')
@@ -777,5 +780,20 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
     not_sorted_link.pop(0)
 
 runtime = time.time()-start_time
+#列印出每個host要送的tt資訊
+for mm in hostnode:
+    hostname = mm
+    print(hostname)
+    hostname = eval(hostname)
+    print(hostname)
+
+
+#列印出每條offset值的狀態
+fq = open('topology_information.txt', 'r')
+for ll in fq:
+    linkname = "nodeto"+ll.rstrip('\n')
+    print(linkname)
+    linkname = eval(linkname)
+    print(linkname)
 print("total runtime is ", runtime)
 print("total queueing time is ", totalqueueingtime)

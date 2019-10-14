@@ -236,10 +236,16 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
             '''
             position = []
             for posi in range(len(lname)):
+                '''
                 if lname[posi] == 1:
                     position.append(posi)
                 else:
                     pass
+                '''
+                if lname[posi] == 0:
+                    pass
+                else:
+                    position.append(posi)
             print('can not use time slot is ')
             print(position)
             if position:
@@ -616,6 +622,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                                     if () and ():  #兩個tt真的有overlap,則把排成的tt往後移動,移動完要確認是否會影響到佔用後面time slot的tt
                                     else: #檢查這兩個tt是否真的有overlap, 或只是佔用的同一格time slot但是不會互相影響到
                             '''
+                            '''
                             try: #此格time slot目前只被一條tt使用,代表可能有機會不overlap
 
                                 s1 = xmlentry[linkoffset]['start']
@@ -632,6 +639,8 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                                     linkname[linkoffset] = 1
                             except:  #這一格已經被兩個tt使用,一定會overlap
                                 pass
+                            '''
+                            
 
 
 

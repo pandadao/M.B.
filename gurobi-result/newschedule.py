@@ -479,7 +479,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
             tt_i = "tt"+str(tmp_schedule_tt[i])
             tti = eval(tt_i)
             a = int(hyper_period/int(tti[0]))
-            obj = obj
+            obj = obj+tti[6]
 
 
         m.setObjective(obj, GRB.MINIMIZE)
@@ -550,14 +550,15 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
             hop = len(path)
             for nodeth in range(hop-1):
                 #print(nodeth)
-                if path[nodeth] == tt_start:
+                #if path[nodeth] == tt_start:
+                if path[nodeth] in hostnode:
                     #找出現在要計算哪一條link
                     nodesrc  = path[nodeth]
                     nodedest = path[nodeth+1]
                     linkname = "l"+nodesrc+"to"+nodedest
                     print("now calculating the link ", linkname)
                     linkname = eval(linkname)
-                    print(linkname)
+                    #print(linkname)
                     evalhost = eval(nodesrc)  # 變數E1 ,格式為 [{}]
                     print('nodesrc is', evalhost)
                     
@@ -573,7 +574,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                     ttoffsetkeep = math.ceil(endtrans)-ttoffset
 
                     #儲存host相關xml所需資料
-                    evalhost.append({'send':link_group_tt[i][0], 'start':ttoffset, 'end':endtrans, 'queue':7, 'dest': mac_addr, 'size':operating_tt[3]})
+                    evalhost.append({'send':link_group_tt[i][0], 'start':ttoffset, 'end':endtrans, 'queue':7, 'dest': mac_addr, 'size':operating_tt[3], 'transtime':operating_tt[7]})
                     print(nodesrc, ' is', evalhost)
                     
                     #佔用的time slot記錄下來,其它條TT不能佔用
@@ -596,7 +597,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                     
                     #xmlentry = sorted(xmlentry, key = itemgetter('start'))
                     print("now calculating the link ", linkname)
-                    linkname = eval(linkname)
+                    #linkname = eval(linkname)
                     #print(linkname)
                     
                     #求出這條link的propagation delay
@@ -612,14 +613,15 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
 
                         s1 = listvariable['start']
                         e1 = listvariable['end']
-                        if (s2>e1) or (e2<s1):   # no overlap
+                        if (s2>=e1) or (e2<=s1):   # no overlap
                             pass
 
                         else:   #overlap, 將發送時間向後移動
                             print("shift")
                             totalqueueingtime = totalqueueingtime+ e1-s2
+                            print("totalqueueingtime is", totalqueueingtime)
                             s2 = e1
-                            e2 = s2+nexthop_tt_start_time+operating_tt[7]+interframegap
+                            e2 = s2+operating_tt[7]+interframegap
 
                     nexthop_tt_start_time = e2-interframegap+linkpropagationdelay
                     gate_open_time = math.floor(s2)
@@ -627,6 +629,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                     xmlentry.append({'send':link_group_tt[i][0], 'start':s2, 'end':e2, 'open':gate_open_time, 'length':gate_keep_time, 'bitvector':'00000001'})
 
                     xmlentry = sorted(xmlentry, key = itemgetter('start'))
+                    print(xmlentry)
 
                 '''    
                     for keeptime in range(gate_keep_time):

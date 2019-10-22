@@ -7,6 +7,9 @@ import time
 import numpy as np
 from operator import itemgetter
 import math
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 
 '''
 self develop function, package together
@@ -29,6 +32,8 @@ interframegap = 0.096
 
 send_src = []       # 紀錄host發送端
 path_node = []      # 紀錄哪些結點是中繼的switch
+
+data = pd.DataFrame()   #儲存做圖資料
 
 #將tt資訊讀取出來並存成陣列
 n = 0
@@ -71,6 +76,7 @@ fp = open("Limited_flow_data-%d.txt"%(ttfilename), 'r')
 for i in fp:
     globals()["tt{}".format(n+1)] = []
     globals()["tt{}_offset".format(n+1)] = []
+    globals()["tt{}_QD".format(n+1)] = 0  # 儲存各自tt的qeueueing delay
     a = "tt"+str(n+1)
     tti = eval(a)
     period, start_node, dest_node, length, number ,e2e= i.rstrip('\n').split(" ")
@@ -403,16 +409,27 @@ m.update()
 m.optimize()
 
 
+runtime = time.time()-start_time
+
 schedule_ans = []
 for v in m.getVars():
     if "_" in v.varName:
         srcdest, tt_i = v.varName.split("_")
         src, dest = srcdest.split("to")
         tti = eval(tt_i)
-
+        
+        #get each link propagation
+        nowlink_propagation = topology_3[src][dest]['propDelay']
+        
+        #calculate the arrival time of next node
+        nexthoptime = int(v.x)+tti[6]+nowlink_propagation
+        #print(nextahoptime)
         ttx_offsetname = tt_i+"_offset"
         ttx_offset = eval(ttx_offsetname)
-        ttx_offset.append([srcdest, int(v.x), tti[0], tti[6]])
+        ttx_offset.append([srcdest, int(v.x), tti[0], tti[6],nexthoptime])
+        #ttx_noffset = sorted(ttx_offset, key = itemgetter(1))
+        #print(ttx_noffaset)
+        #ttx_offset = ttx_noffset
         #print(ttx_offsetname, ttx_offset)
 
         schedule_ans.append([v.varName, int(v.x), tti[0], tti[2], tti[3], tti[6]])
@@ -431,19 +448,42 @@ for v in m.getVars():
     else:
         pass
 
-runtime = time.time()-start_time
 
 queuetime_sum = 0.0
 
 #計算總queueing delay值
 for i in tt_count:
     tt_i = "tt"+str(i)
+    #print(tt_i)
     tti = eval(tt_i)
+
+     #記算每條tt的queueing delay
+    ttx_offsetname = tt_i+"_offset"
+    ttx_offset = eval(ttx_offsetname)
+    print(ttx_offset)
+    tti_qd = tt_i+"_QD"
+    ttiqd = eval(tti_qd)
+    ttxnoffset = sorted(ttx_offset, key = itemgetter(1))
+    print("ttxnoffset is ", ttxnoffset)
+    for j in range(len(ttxnoffset)-1):
+        linkoffset = ttxnoffset[j+1][1]
+        nexthoptime = ttxnoffset[j][4]
+        ttiqd = ttiqd+linkoffset-nexthoptime
+    ttiqd = ttiqd*(hyper_period/tti[0])
+    print(tt_i," queueing delay is ", ttiqd)
+    ti = pd.DataFrame([ttiqd], index = [tt_i], columns = pd.Index(['queueing time']))
+    data = data.append(ti)
+    queuetime_sum = queuetime_sum + ttiqd
+    
+    
+    '''
+    #此part是計算總queueing delay
     ttsrc = "E"+str(tti[1])
     ttdest = "E"+str(tti[2])
     path = shortestPath(graph_3, ttsrc, ttdest)
     ttx_offsetname = tt_i+"_offset"
     ttx_offset = eval(ttx_offsetname)
+    print(ttx_offset)
     
     path = shortestPath(graph_3, ttsrc, ttdest)
     for j in range(len(path)):  #處理字串方便之後運算, [['E1']] => ['E1']
@@ -471,7 +511,17 @@ for i in tt_count:
             tmpqueueingtime = tmpqueueingtime+gateopen-arrivetime
             arrivetime = gateopen+trans+proptime
     queuetime_sum = queuetime_sum+tmpqueueingtime*int(hyper_period/int(hyp))
+    '''
 
 print("rtns total run time is ", runtime, "s")
 print("total queueing time(us) is", queuetime_sum)        
+ti = pd.DataFrame([queuetime_sum], index = ["total"], columns = pd.Index(['queueing time']))
+data = data.append(ti)
+print(data)
+data.plot.bar()
+plt.xlabel("tt number")
+plt.ylabel('Queueing time (us)')
+plt.title("Queueing Time ")
+
+plt.show()
 

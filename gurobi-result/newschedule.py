@@ -25,6 +25,7 @@ obj = 0.0           # 目標式參數
 interframegap = 0.096
 send_src = []       # 紀錄host發送端
 path_node = []      # 紀錄哪些結點是中繼的switch
+threshould = 0.5
 
 #將tt資訊讀取出來並存成陣列
 n = 0
@@ -605,6 +606,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                     
                     #計算是否有重疊,處理完所有重疊後再求gatetime
                     flag = 'checkoverlap'
+                    tmpuse = nexthop_tt_start_time
                     s2 = nexthop_tt_start_time
                     e2 = nexthop_tt_start_time+operating_tt[7]+interframegap
                     listvariable = 0
@@ -615,14 +617,36 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                         e1 = listvariable['end']
                         if (s2>=e1) or (e2<=s1):   # no overlap
                             pass
+                            
 
                         else:   #overlap, 將發送時間向後移動
                             print("shift")
-                            totalqueueingtime = totalqueueingtime+ e1-s2
-                            print("totalqueueingtime is", totalqueueingtime)
+                            #totalqueueingtime = totalqueueingtime+ e1-s2
+                            #print("totalqueueingtime is", totalqueueingtime)
                             s2 = e1
                             e2 = s2+operating_tt[7]+interframegap
 
+                    #將計算完的結果依照threshould產生GCL
+                    keyvalue = s2 - math.floor(s2)
+                    if(keyvalue > threshould):
+                        gate_open_time = math.ceil(s2)
+                        e2 = gate_open_time+operating_tt[7]+interframegap
+                        totalqueueingtime = totalqueueingtime+gate_open_time-tmpuse
+                        gate_keep_time = math.ceil(e2)-gate_open_time
+                        nexthop_tt_start_time = e2-interframegap+linkpropagationdelay
+                        xmlentry.append({'send':link_group_tt[i][0], 'start':gate_open_time, 'end':e2, 'open':gate_open_time, 'length':gate_keep_time, 'bitvector':'00000001'})
+                    
+                    else:
+                        nexthop_tt_start_time = e2-interframegap+linkpropagationdelay
+                        gate_open_time = math.floor(s2)
+                        gate_keep_time = math.ceil(e2)-gate_open_time
+                        xmlentry.append({'send':link_group_tt[i][0], 'start':s2, 'end':e2, 'open':gate_open_time, 'length':gate_keep_time, 'bitvector':'00000001'})
+                    
+                    
+                    xmlentry = sorted(xmlentry, key = itemgetter('start'))
+                    print(xmlentry)
+
+                    ''' #計算overlap完後產生對應的tt傳送跟傳完的時間並產生GCL
                     nexthop_tt_start_time = e2-interframegap+linkpropagationdelay
                     gate_open_time = math.floor(s2)
                     gate_keep_time = math.ceil(e2)-gate_open_time
@@ -630,6 +654,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
 
                     xmlentry = sorted(xmlentry, key = itemgetter('start'))
                     print(xmlentry)
+                    '''
 
                 '''    
                     for keeptime in range(gate_keep_time):

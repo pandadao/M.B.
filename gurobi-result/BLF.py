@@ -25,6 +25,7 @@ obj = 0.0           # 目標式參數
 interframegap = 0.096
 send_src = []       # 紀錄host發送端
 path_node = []      # 紀錄哪些結點是中繼的switch
+threshould = 0.5
 
 #將tt資訊讀取出來並存成陣列
 n = 0
@@ -605,6 +606,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                     
                     #計算是否有重疊,處理完所有重疊後再求gatetime
                     flag = 'checkoverlap'
+                    tmpuse = nexthop_tt_start_time
                     s2 = nexthop_tt_start_time
                     e2 = nexthop_tt_start_time+operating_tt[7]+interframegap
                     listvariable = 0
@@ -615,126 +617,76 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                         e1 = listvariable['end']
                         if (s2>=e1) or (e2<=s1):   # no overlap
                             pass
+                            
 
                         else:   #overlap, 將發送時間向後移動
                             print("shift")
-                            totalqueueingtime = totalqueueingtime+ e1-s2
-                            print("totalqueueingtime is", totalqueueingtime)
+                            #totalqueueingtime = totalqueueingtime+ e1-s2
+                            #print("totalqueueingtime is", totalqueueingtime)
                             s2 = e1
                             e2 = s2+operating_tt[7]+interframegap
 
-                    nexthop_tt_start_time = e2-interframegap+linkpropagationdelay
-                    gate_open_time = math.floor(s2)
-                    gate_keep_time = math.ceil(e2)-gate_open_time
-                    xmlentry.append({'send':link_group_tt[i][0], 'start':s2, 'end':e2, 'open':gate_open_time, 'length':gate_keep_time, 'bitvector':'00000001'})
+                    
+                    #判斷transmission time是否超過一格time slot,如果本身傳輸時間超過一個time slot,則沒關係,如果本身傳輸時間小於一單位的time slot,則向後延遲傳輸
+                    e2floor = math.floor(e2)
+                    s2floor = math.floor(s2)
+                    transfloor = math.floor(operating_tt[7])
+                    #先判斷是否有因為overlap而改變傳輸時間
+                    if s2 == tmpuse:
 
+                        if (e2floor-s2floor)>0: #牌成的傳輸時間超出一格
+                            if transfloor >1: #自身傳輸時間就需要超出一格,不動作
+                                gate_open_time = math.floor(s2)
+                                gate_keep_time = math.ceil(e2)-gate_open_time
+                                nexthop_tt_start_time = e2-interframegap+linkpropagationdelay
+                                xmlentry.append({'send':link_group_tt[i][0], 'start':s2, 'end':e2, 'open':gate_open_time, 'length':gate_keep_time, 'bitvector':'00000001'})
+
+                            else: #自身所需的time slot小於一格,但是佔用了兩格time slot做傳輸,將此TT向後移動
+                                gate_open_time = math.ceil(s2)
+                                e2 = gate_open_time+operating_tt[7]+interframegap
+                                totalqueueingtime = totalqueueingtime+gate_open_time-tmpuse
+                                gate_keep_time = math.ceil(e2)-gate_open_time
+                                nexthop_tt_start_time = e2-interframegap+linkpropagationdelay
+                                xmlentry.append({'send':link_group_tt[i][0], 'start':gate_open_time, 'end':e2, 'open':gate_open_time, 'length':gate_keep_time, 'bitvector':'00000001'})
+                        
+                        else: #本身傳輸時間就小於一格time slot
+                            gate_open_time = math.floor(s2)
+                            gate_keep_time = math.ceil(e2)-gate_open_time
+                            nexthop_tt_start_time = e2-interframegap+linkpropagationdelay
+                            xmlentry.append({'send':link_group_tt[i][0], 'start':s2, 'end':e2, 'open':gate_open_time, 'length':gate_keep_time, 'bitvector':'00000001'})
+
+
+                    else: #有因為overlap而移動過,就接續傳輸,可以節省頻寬跟降低queueing delay,不需要再更動
+                        gate_open_time = math.floor(s2)
+                        gate_keep_time = math.ceil(e2)-gate_open_time
+                        totalqueueingtime = totalqueueingtime+s2-tmpuse
+                        nexthop_tt_start_time = e2-interframegap+linkpropagationdelay
+                        xmlentry.append({'send':link_group_tt[i][0], 'start':s2, 'end':e2, 'open':gate_open_time, 'length':gate_keep_time, 'bitvector':'00000001'})
+                        
+
+
+                    '''
+                    #將計算完的結果依照threshould產生GCL
+                    keyvalue = s2 - math.floor(s2)
+                    if(keyvalue > threshould):
+                        gate_open_time = math.ceil(s2)
+                        e2 = gate_open_time+operating_tt[7]+interframegap
+                        totalqueueingtime = totalqueueingtime+gate_open_time-tmpuse
+                        gate_keep_time = math.ceil(e2)-gate_open_time
+                        nexthop_tt_start_time = e2-interframegap+linkpropagationdelay
+                        xmlentry.append({'send':link_group_tt[i][0], 'start':gate_open_time, 'end':e2, 'open':gate_open_time, 'length':gate_keep_time, 'bitvector':'00000001'})
+                    
+                    else:
+                        nexthop_tt_start_time = e2-interframegap+linkpropagationdelay
+                        gate_open_time = math.floor(s2)
+                        gate_keep_time = math.ceil(e2)-gate_open_time
+                        xmlentry.append({'send':link_group_tt[i][0], 'start':s2, 'end':e2, 'open':gate_open_time, 'length':gate_keep_time, 'bitvector':'00000001'})
+                    
+                    
                     xmlentry = sorted(xmlentry, key = itemgetter('start'))
                     print(xmlentry)
-
-                '''    
-                    for keeptime in range(gate_keep_time):
-                        linkoffset = (gate_open_time+keeptime)%int(hyper_period)
-                        print("linkoffset: ", linkoffset)
-                        linkname[linkoffset] = linkname[linkoffset]+1
-                        #如果該offset重複了,則開始檢查是否為重疊會錯開
-                        if linkname[linkoffset] > 1:
-                            for offsetkey in xmlentry: #找出overlay的tt是哪一條,開始做微調位置的判斷,後排程的tt flow設定為較低priority, 所以調整的是後排成的tt flow
-                                # overlap的情況是start的數字比linkoffset小,並且start+length比linkoffset大,又因為一次排成一條所以只會搜尋出一個狀況
-                                if (offsetkey['start']<= linkoffset) and ((offsetkey['start']+offsetkey['length']-1)>= linkoffset):  #找出是哪個entry影響道到排程的tt offset
-                                    if () and ():  #兩個tt真的有overlap,則把排成的tt往後移動,移動完要確認是否會影響到佔用後面time slot的tt
-                                    else: #檢查這兩個tt是否真的有overlap, 或只是佔用的同一格time slot但是不會互相影響到
-                            try: #此格time slot目前只被一條tt使用,代表可能有機會不overlap
-
-                                s1 = xmlentry[linkoffset]['start']
-                                e1 = xmlentry[linkoffset]['end']
-                                s2 = nexthop_tt_start_time
-                                e2 = ttsendtime
-                                if (e1>=s2) and (s1<=e2):  # 真的重疊了,需重新排成處理
-                                    pass
-
-
-                                else: #假重疊,實際沒有重複到
-                                    tmp = xmlentry[linkoffset]
-                                    xmlentry[linkoffset] = [tmp, {'send':link_group_tt[i][0], 'start':nexthop_tt_start_time, 'end':ttsendtime, 'open':gate_open_time, 'length':gate_keep_time, 'bitvector':'00000001'}]
-                                    linkname[linkoffset] = 1
-                            except:  #這一格已經被兩個tt使用,一定會overlap
-                                pass
-
-                        else:
-                            xmlentry[linkoffset] = {'send':link_group_tt[i][0], 'start':nexthop_tt_start_time, 'end':ttsendtime, 'open':gate_open_time, 'length':gate_keep_time, 'bitvector':'00000001'}
-
-                            
-
-                        print(linkname)
-                    xmlentry = sorted(xmlentry, key = itemgetter('open'))
-                    print(xmlentry)
-                    nexthop_tt_start_time = nexthop_tt_start_time+linkpropagationdelay+operating_tt[7]
                     '''
-            
 
-        '''
-        for i in range(count_schedule_tt):
-            operating_tt = 'tt'+str(tmp_schedule_tt[i])  #目前要操作的tt,將這個tt會佔用的每條link slot算出來
-            print("目前要排成 ", operating_tt)
-            operating_tt = eval(operating_tt)
-            repeat_time = int(hyper_period/int(operating_tt[0]))
-            print("repeat times is ", repeat_time)
-            tt_start = 'E'+ str(operating_tt[1])
-            tt_end = 'E' + str(operating_tt[2])
-            path = shortestPath(graph_3, tt_start, tt_end)
-            #字串處理
-            for p in range(len(path)):
-                path.append(path[0][0])
-                path.pop(0)
-            print("處理過的path", path)
-            hop = len(path)
-            first_offset = operating_tt[5]
-            for times in range(repeat_time):
-                for nodeth in range(hop-1):
-                    #print(nodeth)
-                    if path[nodeth] == tt_start:
-                        #找出現在要計算哪一條link
-                        nodesrc  = path[nodeth]
-                        nodedest = path[nodeth+1]
-                        linkname = "l"+nodesrc+"to"+nodedest
-                        #print("now calculating the link ", linkname)
-                        linkname = eval(linkname)
-                        #print(linkname)
-                        
-                        #求出這條link的propagation delay
-                        linkpropagationdelay = topology_3[nodesrc][nodedest]['propDelay']
-                        #print("this link's propagation delay is ", linkpropagationdelay)
-
-                        ttoffset = operating_tt[5]+times*operating_tt[0]
-                        linkname[ttoffset] = linkname[ttoffset] + 1
-                        nexthop_tt_start_time = ttoffset + operating_tt[6]+linkpropagationdelay
-                        #print(linkname)
-                        
-
-                    else:
-                        nodesrc = path[nodeth]
-                        nodedest = path[nodeth+1]
-                        linkname = "l"+nodesrc+"to"+nodedest
-                        
-                        print("now calculating the link ", linkname)
-                        linkname = eval(linkname)
-                        #print(linkname)
-                        
-                        #求出這條link的propagation delay
-                        linkpropagationdelay = topology_3[nodesrc][nodedest]['propDelay']
-                        #print("this link's propagation delay is ", linkpropagationdelay)
-                        #計算switch的gate需要開啟的時間點以及開啟多久
-                        gate_open_time = math.floor(nexthop_tt_start_time)
-                        gate_keep_time = math.ceil(nexthop_tt_start_time+operating_tt[6]+interframegap)-gate_open_time
-
-                        for keeptime in range(gate_keep_time):
-                            linkoffset = (gate_open_time+keeptime)%int(hyper_period)
-                            #print("linkoffset: ", linkoffset)
-                            linkname[linkoffset] = linkname[linkoffset]+1
-                            print(linkname)
-
-                        nexthop_tt_start_time = nexthop_tt_start_time+linkpropagationdelay+operating_tt[6]
-        '''
 
         m.reset()
         print('\n')

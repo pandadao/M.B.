@@ -450,12 +450,14 @@ for v in m.getVars():
 
 
 queuetime_sum = 0.0
-
+totalslot = 0
 #計算總queueing delay值
 for i in tt_count:
     tt_i = "tt"+str(i)
     #print(tt_i)
     tti = eval(tt_i)
+    #print("tti ", tti)
+    tti_translot = math.ceil(tti[6])
 
      #記算每條tt的queueing delay
     ttx_offsetname = tt_i+"_offset"
@@ -465,6 +467,7 @@ for i in tt_count:
     ttiqd = eval(tti_qd)
     ttxnoffset = sorted(ttx_offset, key = itemgetter(1))
     print("ttxnoffset is ", ttxnoffset)
+    totalslot = totalslot+((tti_translot*len(ttxnoffset))*(hyper_period/tti[0]))
     for j in range(len(ttxnoffset)-1):
         linkoffset = ttxnoffset[j+1][1]
         nexthoptime = ttxnoffset[j][4]
@@ -476,43 +479,7 @@ for i in tt_count:
     queuetime_sum = queuetime_sum + ttiqd
     
     
-    '''
-    #此part是計算總queueing delay
-    ttsrc = "E"+str(tti[1])
-    ttdest = "E"+str(tti[2])
-    path = shortestPath(graph_3, ttsrc, ttdest)
-    ttx_offsetname = tt_i+"_offset"
-    ttx_offset = eval(ttx_offsetname)
-    print(ttx_offset)
-    
-    path = shortestPath(graph_3, ttsrc, ttdest)
-    for j in range(len(path)):  #處理字串方便之後運算, [['E1']] => ['E1']
-        path.append(path[0][0])
-        path.pop(0)
-
-    arrivetime = 0
-    for j in range(len(path)-1):
-        tmpsrc = path[j]
-        tmpdest = path[j+1]
-        linkname = tmpsrc+"to"+tmpdest
-        proptime = topology_3[tmpsrc][tmpdest]['propDelay']
-        for k in ttx_offset:
-            if linkname in k[0]:
-                gateopen = k[1]
-                hyp = k[2]
-                trans = k[3]
-            else:
-                pass
-        if j == 0: #host開始
-            arrivetime = gateopen+trans+proptime
-            tmpqueueingtime = 0
-
-        else: #其他link
-            tmpqueueingtime = tmpqueueingtime+gateopen-arrivetime
-            arrivetime = gateopen+trans+proptime
-    queuetime_sum = queuetime_sum+tmpqueueingtime*int(hyper_period/int(hyp))
-    '''
-
+print("TT flows total using slot: ", totalslot)
 print("rtns total run time is ", runtime, "s")
 print("total queueing time(us) is", queuetime_sum)        
 ti = pd.DataFrame([queuetime_sum], index = ["total"], columns = pd.Index(['queueing time']))

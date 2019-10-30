@@ -457,7 +457,7 @@ for i in tt_count:
     #print(tt_i)
     tti = eval(tt_i)
     #print("tti ", tti)
-    tti_translot = math.ceil(tti[6])
+    tti_translot = math.ceil(tti[6]+0.096)
 
      #記算每條tt的queueing delay
     ttx_offsetname = tt_i+"_offset"

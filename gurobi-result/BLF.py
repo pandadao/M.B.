@@ -26,7 +26,7 @@ interframegap = 0.096
 send_src = []       # 紀錄host發送端
 path_node = []      # 紀錄哪些結點是中繼的switch
 threshould = 0.5
-
+totalslot = 0
 #將tt資訊讀取出來並存成陣列
 n = 0
 tmp_list = []
@@ -383,97 +383,6 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                     x_number = x_number+1
 
         
-        '''
-        #產生從當前link上所推算的目標式
-        for i in range(count_schedule_tt):
-            tt_i = "tt"+str(tmp_schedule_tt[i])
-            tti = eval(tt_i)
-            tmp_varaible = "tt"+not_sorted_link[0]
-            tmp, nodesrc, nodedest = tmp_varaible.split('E')
-            nodesrc, tmp = nodesrc.split('t')
-            print(tmp, nodesrc, nodedest)
-            src = 'E'+str(tti[1])
-            dest = 'E'+str(tti[2])
-            path = []
-            path = shortestPath(graph_3, src,dest)
-            print(path)
-            #hop = len(path) - (path.index('E'+nodesrc)+1)
-            #hop = len(path) - 2
-            Enodesrc = 'E'+str(nodesrc)
-            print('Enodesrc:',Enodesrc)
-            inde = path.index([Enodesrc])
-            print('inde:', inde)
-            hop = len(path) - (inde+1)      #推算從路徑上某個node到這個tt終點還剩下幾個hop
-            print('hop', hop)
-            a = int(hyper_period/int(tti[0]))
-            
-            propagation_count = 0
-
-            for j in range(len(path)):  #處理字串方便之後運算, [['E1']] => ['E1']
-                path.append(path[0][0])
-                path.pop(0)
-            
-            for calculate in range(hop):
-                nowsrc = path[inde]
-                nowdest = path[inde+1]
-                yo = topology_3[nowsrc][nowdest]['propDelay']
-                print('yo', yo)
-                propagation_count = propagation_count+yo
-                print('propagation ', propagation_count)
-                inde = inde+1
-
-
-
-            #產生目標式
-            for pi in range(a):#計算一個hyperperiod內要傳送幾次tti
-                #obj = tti[5]+pi*tti[0]+hop*tti[6]+0.1*hop  #0.1是propagation delay, 應該要依照真實topology求出來=>  done
-                obj = tti[5]+pi*tti[0]+hop*tti[6]  
-                print(type(obj))
-            obj = obj + propagation_count
-            #print(obj)
-        '''
-        '''
-        #產生從tt source開始推算的目標式
-        obj = 0.0
-        ttipandttioffset = 0
-        #nowttpropandtran = 0
-        ttpropandtran = 0
-        for i in range(count_schedule_tt):
-            nowttpropandtran = 0
-            tt_i = "tt"+str(tmp_schedule_tt[i])
-            tti = eval(tt_i)
-            ttsrc = 'E'+str(tti[1])
-            ttdest = 'E'+str(tti[2])
-            ttpath = shortestPath(graph_3, ttsrc, ttdest)
-            
-            for j in range(len(ttpath)):    #path string operating
-                ttpath.append(ttpath[0][0])
-                ttpath.pop(0)
-
-            print(ttpath)
-            
-            a = int(hyper_period/int(tti[0]))  #tt 重複幾次/hyperperiod
-            #ttipandttioffset = 0
-            for n in range(a):
-                ttipandttioffset = tti[5]+ttipandttioffset + n*tti[0] 
-
-            #求出tti走玩全部路徑的propdelay和transmission delay
-            #ttpropandtran = 0
-            for p in range(len(ttpath)-1):
-                nowsrc = ttpath[p]
-                nowdest = ttpath[p+1]
-                tmpuse = topology_3[nowsrc][nowdest]['propDelay']
-                print("tmpuse is",tmpuse)
-                nowttpropandtran = nowttpropandtran + tti[6] + tmpuse
-                print('nowttpropandtran is', nowttpropandtran)
-                #print('1')
-            ttpropandtran = nowttpropandtran*a +ttpropandtran
-
-            
-        print("ttpropandtran is ", ttpropandtran)
-        obj = ttipandttioffset + ttpropandtran 
-
-        '''
         #修改目標式,單純對offset進行summary
         obj = 0.0
         for i in range(count_schedule_tt):
@@ -562,6 +471,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                     #print(linkname)
                     evalhost = eval(nodesrc)  # 變數E1 ,格式為 [{}]
                     print('nodesrc is', evalhost)
+
                     
                     #求出這條link的propagation delay
                     linkpropagationdelay = topology_3[nodesrc][nodedest]['propDelay']
@@ -598,7 +508,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                     
                     #xmlentry = sorted(xmlentry, key = itemgetter('start'))
                     print("now calculating the link ", linkname)
-                    #linkname = eval(linkname)
+                    linkname = eval(linkname)
                     #print(linkname)
                     
                     #求出這條link的propagation delay
@@ -640,6 +550,8 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                                 gate_keep_time = math.ceil(e2)-gate_open_time
                                 nexthop_tt_start_time = e2-interframegap+linkpropagationdelay
                                 xmlentry.append({'send':link_group_tt[i][0], 'start':s2, 'end':e2, 'open':gate_open_time, 'length':gate_keep_time, 'bitvector':'00000001'})
+                                for used in range(gate_keep_time):
+                                    linkname[gate_open_time+used] = linkname[gate_open_time+used]+1
 
                             else: #自身所需的time slot小於一格,但是佔用了兩格time slot做傳輸,將此TT向後移動
                                 gate_open_time = math.ceil(s2)
@@ -648,12 +560,16 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                                 gate_keep_time = math.ceil(e2)-gate_open_time
                                 nexthop_tt_start_time = e2-interframegap+linkpropagationdelay
                                 xmlentry.append({'send':link_group_tt[i][0], 'start':gate_open_time, 'end':e2, 'open':gate_open_time, 'length':gate_keep_time, 'bitvector':'00000001'})
+                                for used in range(gate_keep_time):
+                                    linkname[gate_open_time+used] = linkname[gate_open_time+used]+1
                         
                         else: #本身傳輸時間就小於一格time slot
                             gate_open_time = math.floor(s2)
                             gate_keep_time = math.ceil(e2)-gate_open_time
                             nexthop_tt_start_time = e2-interframegap+linkpropagationdelay
                             xmlentry.append({'send':link_group_tt[i][0], 'start':s2, 'end':e2, 'open':gate_open_time, 'length':gate_keep_time, 'bitvector':'00000001'})
+                            for used in range(gate_keep_time):
+                                linkname[gate_open_time+used] = linkname[gate_open_time+used]+1
 
 
                     else: #有因為overlap而移動過,就接續傳輸,可以節省頻寬跟降低queueing delay,不需要再更動
@@ -663,6 +579,8 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                         nexthop_tt_start_time = e2-interframegap+linkpropagationdelay
                         xmlentry.append({'send':link_group_tt[i][0], 'start':s2, 'end':e2, 'open':gate_open_time, 'length':gate_keep_time, 'bitvector':'00000001'})
                         
+                        for used in range(gate_keep_time):
+                            linkname[gate_open_time+used] = linkname[gate_open_time+used]+1
 
 
                     '''
@@ -739,7 +657,18 @@ for mm in hostnode:
     hostname = eval(hostname)
     print(hostname)
 
-
+fo = open('topology_information.txt', 'r')
+for i in fo:
+    not_sorted_link.append(i.rstrip('\n'))
+    b = i.rstrip('\n')
+    linkname = 'l'+str(i.rstrip('\n'))
+    linkname = eval(linkname)
+    for j in range(len(linkname)):
+        if linkname[j]>0:
+            totalslot = totalslot+1
+        else:
+            pass
+fo.close
 #列印出每條offset值的狀態
 fq = open('topology_information.txt', 'r')
 for ll in fq:
@@ -747,5 +676,6 @@ for ll in fq:
     print(linkname)
     linkname = eval(linkname)
     print(linkname)
+print("total timeslot is ", totalslot)
 print("total runtime is ", runtime)
 print("total queueing time is ", totalqueueingtime)

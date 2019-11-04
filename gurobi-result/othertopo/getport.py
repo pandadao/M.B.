@@ -15,7 +15,7 @@ topology_3 = {
 }
 '''
 
-topology_3 = {
+topology_4 = {
         
         'E1':{'portNumber':1, 'MAC':'00:00:00:00:00:01', 'E7':{'propDelay':0.1, 'port': 0}}, # E7後面的數字為E1連接到E7的port號,不是E7的port號
         'E2':{'portNumber':1, 'MAC':'00:00:00:00:00:02', 'E7':{'propDelay':0.2, 'port': 0}},
@@ -35,7 +35,7 @@ topology_3 = {
             },
         }
 
-topology_4= {
+topology_3 = {
         
         'E1':{'portNumber':1, 'MAC':'00:00:00:00:00:01', 'E8':{'propDelay':0.3, 'port': 0}}, # E7後面的數字為E1連接到E7的port號,不是E7的port號
         'E2':{'portNumber':1, 'MAC':'00:00:00:00:00:02', 'E9':{'propDelay':0.3, 'port': 0}}, 

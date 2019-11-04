@@ -132,13 +132,14 @@ for i in range(len(tt_count)):
     src = 'E'+str(tti[1])
     dest = 'E'+str(tti[2])
     path = shortestPath(graph_3, src, dest)
+    print(path)
     #print('1 ', path)
 
     for j in range(len(path)):  #處理字串方便之後運算, [['E1']] => ['E1']
         path.append(path[0][0])
         path.pop(0)
         #print('2 ',path)
-    
+    #print(path)
     link_pass = []
     for k in range(len(path)-1):  #將tt經過的每條link區隔開來
         link_pass.append(path[k:k+2])
@@ -389,7 +390,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
             tt_i = "tt"+str(tmp_schedule_tt[i])
             tti = eval(tt_i)
             a = int(hyper_period/int(tti[0]))
-            obj = obj+tti[6]
+            obj = obj+tti[6]*a
 
 
         m.setObjective(obj, GRB.MINIMIZE)

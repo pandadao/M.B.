@@ -30,6 +30,7 @@ interframegap = 0.096
 send_src = []       # 紀錄host發送端
 path_node = []      # 紀錄哪些結點是中繼的switch
 
+
 #將tt資訊讀取出來並存成陣列
 n = 0
 tmp_list = []
@@ -71,6 +72,7 @@ fp = open("Limited_flow_data-%d.txt"%(ttfilename), 'r')
 for i in fp:
     globals()["tt{}".format(n+1)] = []
     globals()["tt{}_offset".format(n+1)] = []
+    globals()["tt{}_QD".format(n+1)] = 0  # 儲存各自tt的qeueueing delay
     a = "tt"+str(n+1)
     tti = eval(a)
     period, start_node, dest_node, length, number ,e2e= i.rstrip('\n').split(" ")
@@ -209,6 +211,7 @@ for i in range(len(all_linkname)):
             print('nowtt', nowtt)
             nowtt = eval(nowtt)
             print(nowtt)
+            a = int(hyper_period/int(nowtt[0]))
 
             globals()[offsetname] = m.addVar(lb = 0, ub = int(int(nowtt[0])-1), vtype = GRB.INTEGER, name = offsetname)
             nowoffset = eval(offsetname)
@@ -221,7 +224,7 @@ for i in range(len(all_linkname)):
 
 
             #print(nowoffset)
-            obj = obj + nowoffset   #objective function is minimize obj 
+            obj = obj + nowoffset*a   #objective function is minimize obj 
             #print(obj)
 
     else:
@@ -403,16 +406,27 @@ m.update()
 m.optimize()
 
 
+runtime = time.time()-start_time
+
 schedule_ans = []
 for v in m.getVars():
     if "_" in v.varName:
         srcdest, tt_i = v.varName.split("_")
         src, dest = srcdest.split("to")
         tti = eval(tt_i)
-
+        
+        #get each link propagation
+        nowlink_propagation = topology_3[src][dest]['propDelay']
+        
+        #calculate the arrival time of next node
+        nexthoptime = int(v.x)+tti[6]+nowlink_propagation
+        #print(nextahoptime)
         ttx_offsetname = tt_i+"_offset"
         ttx_offset = eval(ttx_offsetname)
-        ttx_offset.append([srcdest, int(v.x), tti[0], tti[6]])
+        ttx_offset.append([srcdest, int(v.x), tti[0], tti[6],nexthoptime])
+        #ttx_noffset = sorted(ttx_offset, key = itemgetter(1))
+        #print(ttx_noffaset)
+        #ttx_offset = ttx_noffset
         #print(ttx_offsetname, ttx_offset)
 
         schedule_ans.append([v.varName, int(v.x), tti[0], tti[2], tti[3], tti[6]])
@@ -431,47 +445,36 @@ for v in m.getVars():
     else:
         pass
 
-runtime = time.time()-start_time
 
 queuetime_sum = 0.0
-
+totalslot = 0
 #計算總queueing delay值
 for i in tt_count:
     tt_i = "tt"+str(i)
+    #print(tt_i)
     tti = eval(tt_i)
-    ttsrc = "E"+str(tti[1])
-    ttdest = "E"+str(tti[2])
-    path = shortestPath(graph_3, ttsrc, ttdest)
+    #print("tti ", tti)
+    tti_translot = math.ceil(tti[6]+0.096)
+
+     #記算每條tt的queueing delay
     ttx_offsetname = tt_i+"_offset"
     ttx_offset = eval(ttx_offsetname)
+    print(ttx_offset)
+    tti_qd = tt_i+"_QD"
+    ttiqd = eval(tti_qd)
+    ttxnoffset = sorted(ttx_offset, key = itemgetter(1))
+    print("ttxnoffset is ", ttxnoffset)
+    totalslot = totalslot+((tti_translot*len(ttxnoffset))*(hyper_period/tti[0]))
+    for j in range(len(ttxnoffset)-1):
+        linkoffset = ttxnoffset[j+1][1]
+        nexthoptime = ttxnoffset[j][4]
+        ttiqd = ttiqd+linkoffset-nexthoptime
+    ttiqd = ttiqd*(hyper_period/tti[0])
+    print(tt_i," queueing delay is ", ttiqd)
+    queuetime_sum = queuetime_sum + ttiqd
     
-    path = shortestPath(graph_3, ttsrc, ttdest)
-    for j in range(len(path)):  #處理字串方便之後運算, [['E1']] => ['E1']
-        path.append(path[0][0])
-        path.pop(0)
-
-    arrivetime = 0
-    for j in range(len(path)-1):
-        tmpsrc = path[j]
-        tmpdest = path[j+1]
-        linkname = tmpsrc+"to"+tmpdest
-        proptime = topology_3[tmpsrc][tmpdest]['propDelay']
-        for k in ttx_offset:
-            if linkname in k[0]:
-                gateopen = k[1]
-                hyp = k[2]
-                trans = k[3]
-            else:
-                pass
-        if j == 0: #host開始
-            arrivetime = gateopen+trans+proptime
-            tmpqueueingtime = 0
-
-        else: #其他link
-            tmpqueueingtime = tmpqueueingtime+gateopen-arrivetime
-            arrivetime = gateopen+trans+proptime
-    queuetime_sum = queuetime_sum+tmpqueueingtime*int(hyper_period/int(hyp))
-
+    
+print("TT flows total using slot: ", totalslot)
 print("rtns total run time is ", runtime, "s")
 print("total queueing time(us) is", queuetime_sum)        
 

@@ -34,7 +34,7 @@ send_src = []       # 紀錄host發送端
 path_node = []      # 紀錄哪些結點是中繼的switch
 
 data = pd.DataFrame()   #儲存做圖資料
-
+link_slot = pd.DataFrame()
 #將tt資訊讀取出來並存成陣列
 n = 0
 tmp_list = []
@@ -91,7 +91,10 @@ for i in fp:
     n = n+1
     
 fp.close()
-
+#TODO: 宣告每條link的變數,用來儲存link用了多少time slot
+fo = open('topology_information.txt', 'r')
+linkcount = []
+n = 0
 
 # 求hyper period
 #pair = combine(tt_count, 2)
@@ -114,7 +117,10 @@ for i in fo:
     globals()["tt{}".format(str(i.rstrip('\n')))] = []  # ttExtoEy = [], 儲存通過這個link有哪些tt
     globals()["nodeto{}".format(str(i.rstrip('\n')))] = [] # nodetoExtoEy = [{}] save the time slot is open or close, and the other information like start tt and close tt flow. 
     globals()["{}_schedule".format(str(i.rstrip('\n')))] = []  #儲存此link上的offset值, 格式為[[tt5,0], [tt5,100]]
+    globals()["{}_slot".format(str(i.strip('\n')))] = [0] #儲存此link用了多少的slot數量
     a = 'l'+str(i.rstrip('\n'))
+    linkcount.append(int(n))
+    n = n+1
     #b = 'tt'+str(i.rstrip('\n'))
     #print(b)
     #link_tt = eval(b)
@@ -452,6 +458,7 @@ for v in m.getVars():
 
 queuetime_sum = 0.0
 totalslot = 0
+number = []
 #計算總queueing delay值
 for i in tt_count:
     tt_i = "tt"+str(i)
@@ -473,23 +480,72 @@ for i in tt_count:
         linkoffset = ttxnoffset[j+1][1]
         nexthoptime = ttxnoffset[j][4]
         ttiqd = ttiqd+linkoffset-nexthoptime
+    for k in range(len(ttxnoffset)):
+        linkname = ttxnoffset[j][0]
+        link_name = linkname+"_slot"
+        linkname = eval(link_name)
+        tmpcount = math.ceil(ttxnoffset[j][3])
+        #print("tmpcount is ", tmpcount)
+        tmpcount = int(tmpcount)
+        tmpcount = tmpcount*(hyper_period/tti[0])
+        linkname[0] = linkname[0]+tmpcount
+        #print(link_name, linkname)
     ttiqd = ttiqd*(hyper_period/tti[0])
     print(tt_i," queueing delay is ", ttiqd)
     ti = pd.DataFrame([ttiqd], index = [tt_i], columns = pd.Index(['queueing time']))
+    number.append(int(i)-1)
+    #ti['編號'] = number
     data = data.append(ti)
     queuetime_sum = queuetime_sum + ttiqd
-    
-    
+
+#處理link的slot數據顯示於圖表
+fo = open('topology_information.txt', 'r')
+for i in fo:
+    link_name = str(i.strip('\n'))+"_slot"
+    linkname = eval(link_name)
+    #print(link_name +" use "+str(linkname) +" slots")
+    tmpcount = linkname[0]
+    #print("tmpcount is ", tmpcount)
+    linkslot = pd.DataFrame([tmpcount], index = [link_name], columns = pd.Index(['link name']))
+    link_slot = link_slot.append(linkslot)
+
+fo.close()
+print(link_slot)
+print(linkcount)
+link_slot['number'] = linkcount
+
+
+#show figure 
 print("TT flows total using slot: ", totalslot)
 print("rtns total run time is ", runtime, "s")
 print("total queueing time(us) is", queuetime_sum)        
 ti = pd.DataFrame([queuetime_sum], index = ["total"], columns = pd.Index(['queueing time']))
+number.append(int(len(tt_count)))
+#ti.insert(1,"編號", number, True)
+print(number)
 data = data.append(ti)
-#print(data)
-data.plot.bar()
+data['number'] = number
+print(data)
+#data.plot.bar()
+#plt.xlabel("tt number")
+#plt.ylabel('Queueing time (us)')
+#plt.title("Queueing Time ")
+
+#plt.show()
+link_slot['link name'].plot.bar()
+for a,b in zip(link_slot['number'], link_slot['link name']):
+    plt.text(a, b+0.001, '%.2f' %b, ha = 'center', va = 'bottom', fontsize=9)
+
+plt.xlabel("link's name")
+plt.ylabel('slot count (unit slot)')
+plt.title("each link use slots? ")
+plt.show()
+
+data['queueing time'].plot.bar()
+#plt.grid(axis='y')
+for a,b in zip(data['number'],data['queueing time']):
+    plt.text(a, b+0.001, '%.2f' %b, ha = 'center', va = 'bottom', fontsize=9)
 plt.xlabel("tt number")
 plt.ylabel('Queueing time (us)')
 plt.title("Queueing Time ")
-
 plt.show()
-

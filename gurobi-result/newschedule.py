@@ -8,6 +8,10 @@ import numpy as np
 from operator import itemgetter
 import math
 
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
 '''
 self develop function, package together
 '''
@@ -27,10 +31,14 @@ send_src = []       # 紀錄host發送端
 path_node = []      # 紀錄哪些結點是中繼的switch
 threshould = 0.5
 totalslot = 0
+queueingtime_sum = 0
 #將tt資訊讀取出來並存成陣列
 n = 0
 tmp_list = []
 tt_count = []
+
+queueing_pd = pd.DataFrame() #儲存queueing delay的相關作圖資料
+linkslot_pd = pd.DataFrame() #儲存每條link 的slot相關做圖資料
 
 not_sorted_link = []# 紀錄尚未進行排程的link
 link_dict = {}
@@ -63,12 +71,12 @@ ttfilename = int(input("read how many tt flow? "))
 fp = open('Limited_flow_data-%d.txt'%(ttfilename), 'r')
 for i in fp:
     globals()["tt{}".format(n+1)] = []
+    globals()["tt{}_QD".format(n+1)] = [0]  # 儲存各自tt的qeueueing delay
     a = "tt"+str(n+1)
     tti = eval(a)
     period, start_node, dest_node, length, number ,e2e= i.rstrip('\n').split(" ")
 
     #TODO: Limited_flow_data.txt的資訊新增e2e,需要重新修改tti的陣列資訊
-
 
     tti.append(int(period))
     tti.append(start_node)
@@ -90,7 +98,9 @@ for i in range(len(tmp_list)):
     hyper_period = lcms(int(tmp_list[i]), hyper_period)
 #print("hyper period is %d" %hyper_period)
 
-
+fo = open('topology_information.txt', 'r')
+linkcount = []
+n = 0
 
 #將link記錄下來,產生對應的time slot array
 fo = open('topology_information.txt', 'r')
@@ -101,7 +111,10 @@ for i in fo:
     globals()["{}".format('l'+str(i.rstrip('\n')))] = [0]*hyper_period   # lExEy = [0, 1, 0], link的time slot
     globals()["tt{}".format(str(i.rstrip('\n')))] = []  # ttExtoEy = [], 儲存通過這個link有哪些tt
     globals()["nodeto{}".format(str(i.strip('\n')))] = [] # nodetoExtoEy = [{}] save the time slot is open or close, and the other information like start tt and close tt flow.  
+    globals()["{}_slot".format(str(i.strip('\n')))] = [0] #儲存此link用了多少的slot數量
     a = 'l'+str(i.rstrip('\n'))
+    linkcount.append(int(n))
+    n = n+1
     #b = 'tt'+str(i.rstrip('\n'))
     #print(b)
     #link_tt = eval(b)
@@ -119,7 +132,7 @@ for i in fo:
 #print('link_dict is ', link_dict)
 #print('not sorted link: ', not_sorted_link)
 fo.close()
-
+linkcount.append(len(linkcount))
 
 
 #將tt flow所經過的路徑進行統計權重
@@ -444,12 +457,17 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
         #依照每個tt進行time slot的推算
         length_link_group_tt = len(link_group_tt)
         for i in range(length_link_group_tt):
-            operating_tt = link_group_tt[i][0]
-            print("目前要排成 ", operating_tt)
-            operating_tt = eval(operating_tt)
+            operating_ttname = link_group_tt[i][0]
+            print("目前要排成 ", operating_ttname)
+            operating_tt = eval(operating_ttname)
             print("目前要排成 ", operating_tt)
             tt_start = 'E'+ str(operating_tt[1])
             tt_end = 'E' + str(operating_tt[2])
+
+            #宣告tti_QD變數
+            tti_qd = operating_ttname+"_QD"
+            ttiqd = eval(tti_qd)
+
             path = shortestPath(graph_3, tt_start, tt_end)
             #字串處理
             for p in range(len(path)):
@@ -506,6 +524,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                     print("xmlentry name is", xmlentry_name)
                     xmlentry = eval(xmlentry_name)
                     print("xmlentry is", xmlentry)
+
                     
                     #xmlentry = sorted(xmlentry, key = itemgetter('start'))
                     print("now calculating the link ", linkname)
@@ -558,6 +577,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                                 gate_open_time = math.ceil(s2)
                                 e2 = gate_open_time+operating_tt[7]+interframegap
                                 totalqueueingtime = totalqueueingtime+gate_open_time-tmpuse
+                                ttiqd[0] = ttiqd[0]+gate_open_time-tmpuse
                                 gate_keep_time = math.ceil(e2)-gate_open_time
                                 nexthop_tt_start_time = e2-interframegap+linkpropagationdelay
                                 xmlentry.append({'send':link_group_tt[i][0], 'start':gate_open_time, 'end':e2, 'open':gate_open_time, 'length':gate_keep_time, 'bitvector':'00000001'})
@@ -577,6 +597,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                         gate_open_time = math.floor(s2)
                         gate_keep_time = math.ceil(e2)-gate_open_time
                         totalqueueingtime = totalqueueingtime+s2-tmpuse
+                        ttiqd[0] = ttiqd[0]+s2-tmpuse 
                         nexthop_tt_start_time = e2-interframegap+linkpropagationdelay
                         xmlentry.append({'send':link_group_tt[i][0], 'start':s2, 'end':e2, 'open':gate_open_time, 'length':gate_keep_time, 'bitvector':'00000001'})
                         
@@ -584,27 +605,6 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                             linkname[gate_open_time+used] = linkname[gate_open_time+used]+1
 
 
-                    '''
-                    #將計算完的結果依照threshould產生GCL
-                    keyvalue = s2 - math.floor(s2)
-                    if(keyvalue > threshould):
-                        gate_open_time = math.ceil(s2)
-                        e2 = gate_open_time+operating_tt[7]+interframegap
-                        totalqueueingtime = totalqueueingtime+gate_open_time-tmpuse
-                        gate_keep_time = math.ceil(e2)-gate_open_time
-                        nexthop_tt_start_time = e2-interframegap+linkpropagationdelay
-                        xmlentry.append({'send':link_group_tt[i][0], 'start':gate_open_time, 'end':e2, 'open':gate_open_time, 'length':gate_keep_time, 'bitvector':'00000001'})
-                    
-                    else:
-                        nexthop_tt_start_time = e2-interframegap+linkpropagationdelay
-                        gate_open_time = math.floor(s2)
-                        gate_keep_time = math.ceil(e2)-gate_open_time
-                        xmlentry.append({'send':link_group_tt[i][0], 'start':s2, 'end':e2, 'open':gate_open_time, 'length':gate_keep_time, 'bitvector':'00000001'})
-                    
-                    
-                    xmlentry = sorted(xmlentry, key = itemgetter('start'))
-                    print(xmlentry)
-                    '''
 
 
         m.reset()
@@ -664,12 +664,25 @@ for i in fo:
     b = i.rstrip('\n')
     linkname = 'l'+str(i.rstrip('\n'))
     linkname = eval(linkname)
+
+    #儲存每條link的slot數量
+    linkname_pd = str(i.strip('\n'))+"_slot"
+    linknamepd = eval(linkname_pd)
+
     for j in range(len(linkname)):
         if linkname[j]>0:
             totalslot = totalslot+1
+            linknamepd[0] = linknamepd[0]+1
         else:
             pass
+    tmpcount = int(linknamepd[0])
+    linkslot = pd.DataFrame([tmpcount], index = [linkname_pd], columns = pd.Index(['link name']))
+    linkslot_pd = linkslot_pd.append(linkslot)
 fo.close
+linkslot = pd.DataFrame([totalslot], index = ['total slot'], columns = pd.Index(['link name']))
+linkslot_pd = linkslot_pd.append(linkslot)
+linkslot_pd['number'] = linkcount
+
 #列印出每條offset值的狀態
 fq = open('topology_information.txt', 'r')
 for ll in fq:
@@ -680,3 +693,38 @@ for ll in fq:
 print("total timeslot is ", totalslot)
 print("total runtime is ", runtime)
 print("total queueing time is ", totalqueueingtime)
+
+
+#show figure of each link slot
+linkslot_pd['link name'].plot.bar()
+for a,b in zip(linkslot_pd['number'], linkslot_pd['link name']):
+    plt.text(a, b+0.001, '%d' %b, ha = 'center', va = 'bottom', fontsize=9)
+
+plt.xlabel("link's name")
+plt.ylabel('slot count (unit slot)')
+plt.title("each link use slots? ")
+plt.show()
+
+# show figure of each tti
+ttcount = []
+for i in range(len(tt_count)):
+    tti_qd = "tt"+str(i+1)+"_QD"
+    tt_i = "tt"+str(i+1)
+    ttcount.append(i)
+    ttiqd = eval(tti_qd)
+    ti = pd.DataFrame([ttiqd[0]], index = [tt_i], columns = pd.Index(['queueing time']))
+    queueing_pd = queueing_pd.append(ti)
+
+ttcount.append(len(ttcount))
+ti = pd.DataFrame([totalqueueingtime], index = ['total'], columns = pd.Index(['queueing time']))
+queueing_pd = queueing_pd.append(ti)
+queueing_pd['number'] = ttcount
+
+queueing_pd['queueing time'].plot.bar()
+#plt.grid(axis='y')
+for a,b in zip(queueing_pd['number'],queueing_pd['queueing time']):
+    plt.text(a, b+0.001, '%.2f' %b, ha = 'center', va = 'bottom', fontsize=9)
+plt.xlabel("tt number")
+plt.ylabel('Queueing time (us)')
+plt.title("Queueing Time ")
+plt.show()

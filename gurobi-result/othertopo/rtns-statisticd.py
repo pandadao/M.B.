@@ -484,7 +484,7 @@ for i in tt_count:
         linkname = ttxnoffset[j][0]
         link_name = linkname+"_slot"
         linkname = eval(link_name)
-        tmpcount = math.ceil(ttxnoffset[j][3])
+        tmpcount = math.ceil(ttxnoffset[j][3]+0.096)
         #print("tmpcount is ", tmpcount)
         tmpcount = int(tmpcount)
         tmpcount = tmpcount*(hyper_period/tti[0])
@@ -504,7 +504,7 @@ for i in fo:
     link_name = str(i.strip('\n'))+"_slot"
     linkname = eval(link_name)
     #print(link_name +" use "+str(linkname) +" slots")
-    tmpcount = linkname[0]
+    tmpcount = int(linkname[0])
     #print("tmpcount is ", tmpcount)
     linkslot = pd.DataFrame([tmpcount], index = [link_name], columns = pd.Index(['link name']))
     link_slot = link_slot.append(linkslot)
@@ -534,7 +534,7 @@ print(data)
 #plt.show()
 link_slot['link name'].plot.bar()
 for a,b in zip(link_slot['number'], link_slot['link name']):
-    plt.text(a, b+0.001, '%.2f' %b, ha = 'center', va = 'bottom', fontsize=9)
+    plt.text(a, b+0.001, '%d' %b, ha = 'center', va = 'bottom', fontsize=9)
 
 plt.xlabel("link's name")
 plt.ylabel('slot count (unit slot)')

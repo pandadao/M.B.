@@ -702,7 +702,7 @@ for a,b in zip(linkslot_pd['number'], linkslot_pd['link name']):
 
 plt.xlabel("link's name")
 plt.ylabel('slot count (unit slot)')
-plt.title("each link use slots? ")
+plt.title("BLF each link use slots ")
 plt.show()
 
 # show figure of each tti
@@ -726,5 +726,5 @@ for a,b in zip(queueing_pd['number'],queueing_pd['queueing time']):
     plt.text(a, b+0.001, '%.2f' %b, ha = 'center', va = 'bottom', fontsize=9)
 plt.xlabel("tt number")
 plt.ylabel('Queueing time (us)')
-plt.title("Queueing Time ")
+plt.title("BLF Queueing Time ")
 plt.show()

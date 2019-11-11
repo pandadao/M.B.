@@ -510,8 +510,13 @@ for i in fo:
     link_slot = link_slot.append(linkslot)
 
 fo.close()
+
+
+linkslot = pd.DataFrame([totalslot], index = ['totalslot'], columns = pd.Index(['link name']))
+link_slot = link_slot.append(linkslot)
 print(link_slot)
 print(linkcount)
+linkcount.append(len(linkcount))
 link_slot['number'] = linkcount
 
 
@@ -538,7 +543,7 @@ for a,b in zip(link_slot['number'], link_slot['link name']):
 
 plt.xlabel("link's name")
 plt.ylabel('slot count (unit slot)')
-plt.title("each link use slots? ")
+plt.title("rtns each link use slots ")
 plt.show()
 
 data['queueing time'].plot.bar()
@@ -547,5 +552,5 @@ for a,b in zip(data['number'],data['queueing time']):
     plt.text(a, b+0.001, '%.2f' %b, ha = 'center', va = 'bottom', fontsize=9)
 plt.xlabel("tt number")
 plt.ylabel('Queueing time (us)')
-plt.title("Queueing Time ")
+plt.title("rtns Queueing Time ")
 plt.show()

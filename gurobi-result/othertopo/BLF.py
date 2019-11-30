@@ -45,6 +45,9 @@ link_dict = {}
 
 totalqueueingtime = 0
 
+variable_count = 0
+constraint_count = 0
+
 start_time = time.time()
 
 
@@ -230,6 +233,7 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
             tti = eval(a)
             va = "x"+str(x_number+1)
             globals()['x{}'.format(x_number+1)] = m.addVar(lb = 0, ub = int(int(tti[0])-1), vtype = GRB.INTEGER, name = va)  #offset變數宣告完畢
+            variable_count = variable_count+1
             tti.append(eval(va))
             x_number = x_number+1
 
@@ -272,12 +276,14 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                     na = 'n'+str(n_number)
                     print('na is ', na)
                     globals()['n{}'.format(n_number)] = m.addVar(lb = 0, ub = int(hyper_period), vtype = GRB.INTEGER, name = na)
+                    variable_count = variable_count+1
                     na = eval(na)
                     print('na is', na)
 
                     #給每個y有各自的變數
                     ya = 'y'+str(y_number)
                     globals()['y{}'.format(y_number)]=m.addVar(lb=0, ub =1, vtype=GRB.BINARY, name=ya)
+                    variable_count = variable_count+1
                     ya = eval(ya)
                     y_number = y_number+1
 
@@ -285,14 +291,17 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                     print('tmp_number is', tmp_number)
                     ca = "c"+str(c_number)
                     m.addConstr(na == int(tmp_number), ca)
+                    constraint_count = constraint_count+1
                     n_number = n_number+1
                     c_number = c_number+1
 
                     ca = "c"+str(c_number)
                     m.addConstr(na-tti[6]+M*ya>=e, ca)
+                    constraint_count = constraint_count+1
                     c_number = c_number+1
                     ca = "c"+str(c_number)
                     m.addConstr(na-tti[6]+M*ya<=M-e, ca)
+                    constraint_count = constraint_count+1
                     c_number = c_number+1
 
             else:
@@ -310,8 +319,9 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
             tti.append(tti_L)
             print(tti)
             ca = "c"+str(c_number)
-            c_number = c_number +1
             m.addConstr(tti[6]<=tti[0]-tti[7]-0.096, ca)
+            constraint_count = constraint_count+1
+            c_number = c_number +1
             #print('1')
         
 
@@ -385,15 +395,18 @@ while not_sorted_link:    #如果還有link沒有進行排程,則不能結束
                 for l in range(b):
                     va = "x"+str(x_number+1)
                     globals()['x{}'.format(x_number+1)] = m.addVar(lb = 0, ub = 1, vtype = GRB.INTEGER, name = va)
+                    variable_count = variable_count+1
                     #宣告c0 c1 c2等編號
                     ca = "c"+str(c_number)
-                    c_number = c_number+1
                     #把x1跟tt1結合起來,產生限制式
                     m.addConstr(ttj[6]-tti[6]+l*ttj[0]-k*tti[0]-M*eval(va)<= tti_A-(ttj_B+ttj[7]+0.096),ca)
+                    constraint_count = constraint_count+1
+                    c_number = c_number+1
                     #如果想讓gate多保留time slot,就在0.096後面加1或n
                     ca = "c"+str(c_number)
-                    c_number = c_number+1
                     m.addConstr(tti[6]-ttj[6]+k*tti[0]-l*ttj[0]+M*eval(va)<= M+ttj_B-tti_A-(tti[7]+0.096),ca)
+                    constraint_count = constraint_count+1
+                    c_number = c_number+1
                     x_number = x_number+1
 
         
@@ -728,3 +741,6 @@ plt.xlabel("tt number")
 plt.ylabel('Queueing time (us)')
 plt.title("BLF Queueing Time ")
 plt.show()
+
+print("constraint count ", constraint_count)
+print("variable count ", variable_count)

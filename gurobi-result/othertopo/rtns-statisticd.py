@@ -29,7 +29,7 @@ constraint_count = 0 #紀錄總共有幾條constraint, 用於宣告限制式時�
 y_count = 0         #紀錄每次的big M solve
 
 interframegap = 0.096
-
+variable_count = 0  #紀錄總共有多少變數來求解
 send_src = []       # 紀錄host發送端
 path_node = []      # 紀錄哪些結點是中繼的switch
 
@@ -224,6 +224,7 @@ for i in range(len(all_linkname)):
             a = int(hyper_period/int(nowtt[0]))
 
             globals()[offsetname] = m.addVar(lb = 0, ub = int(int(nowtt[0])-1), vtype = GRB.INTEGER, name = offsetname)
+            variable_count = variable_count+1
             nowoffset = eval(offsetname)
             #offsetlist.append(nowoffset)
             
@@ -272,7 +273,7 @@ for i in range(len(all_linkname)):
                 for l in range(b):
                     ya = "y"+str(y_count+1) # big M solve的y變數
                     globals()['y{}'.format(y_count+1)] = m.addVar(lb = 0, ub = 1, vtype = GRB.BINARY, name = ya)
-
+                    variable_count = variable_count+1
 
                     ca = "c"+str(constraint_count+1)
                     y_count = y_count+1
@@ -340,17 +341,18 @@ for i in range(len(all_linkname)):
                     for l in range(b):
                         ya = "y"+str(y_count+1)
                         globals()['y{}'.format(y_count+1)] = m.addVar(lb = 0, ub = 1, vtype = GRB.BINARY, name = ya)
+                        variable_count = variable_count+1
                         y_count = y_count+1
-
-                        ca = "c"+str(constraint_count+1)
-                        constraint = constraint_count+1
-
-                        m.addConstr(ttj_preoffset-tti_preoffset+l*nowttj[0]-k*nowtti[0]-M*eval(ya)<=tti_prepropagation-ttj_prepropagation)   #若是要加上transmission delay請參照推導的公式
 
                         ca = "c"+str(constraint_count+1)
                         constraint_count = constraint_count+1
 
-                        m.addConstr(tti_preoffset-ttj_preoffset+k*nowtti[0]-l*nowttj[0]+M*eval(ya)<=M+ttj_prepropagation-tti_prepropagation)
+                        m.addConstr((ttj_preoffset-tti_preoffset+l*nowttj[0]-k*nowtti[0]-M*eval(ya)<=tti_prepropagation-ttj_prepropagation), ca)   #若是要加上transmission delay請參照推導的公式
+
+                        ca = "c"+str(constraint_count+1)
+                        constraint_count = constraint_count+1
+
+                        m.addConstr((tti_preoffset-ttj_preoffset+k*nowtti[0]-l*nowttj[0]+M*eval(ya)<=M+ttj_prepropagation-tti_prepropagation), ca)
                 
 
     else:
@@ -481,15 +483,15 @@ for i in tt_count:
         nexthoptime = ttxnoffset[j][4]
         ttiqd = ttiqd+linkoffset-nexthoptime
     for k in range(len(ttxnoffset)):
-        linkname = ttxnoffset[j][0]
+        linkname = ttxnoffset[k][0]
         link_name = linkname+"_slot"
         linkname = eval(link_name)
         tmpcount = math.ceil(ttxnoffset[j][3]+0.096)
         #print("tmpcount is ", tmpcount)
-        tmpcount = int(tmpcount)
+        #tmpcount = int(tmpcount)
         tmpcount = tmpcount*(hyper_period/tti[0])
         linkname[0] = linkname[0]+tmpcount
-        #print(link_name, linkname)
+        print(link_name, linkname)
     ttiqd = ttiqd*(hyper_period/tti[0])
     print(tt_i," queueing delay is ", ttiqd)
     ti = pd.DataFrame([ttiqd], index = [tt_i], columns = pd.Index(['queueing time']))
@@ -505,7 +507,7 @@ for i in fo:
     linkname = eval(link_name)
     #print(link_name +" use "+str(linkname) +" slots")
     tmpcount = int(linkname[0])
-    #print("tmpcount is ", tmpcount)
+    print("508tmpcount is ", tmpcount)
     linkslot = pd.DataFrame([tmpcount], index = [link_name], columns = pd.Index(['link name']))
     link_slot = link_slot.append(linkslot)
 
@@ -554,3 +556,5 @@ plt.xlabel("tt number")
 plt.ylabel('Queueing time (us)')
 plt.title("rtns Queueing Time ")
 plt.show()
+print("constraint count ", constraint_count)
+print("variable count ", variable_count)
